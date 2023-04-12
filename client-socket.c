@@ -78,14 +78,16 @@ int main(int argc, char *argv[])
 
     freeaddrinfo(servinfo); // all done with this structure
 
-    if ((numbytes = recv(sockfd, buf, MAXDATASIZE-1, 0)) == -1) {
-        perror("recv");
-        exit(1);
-    }
+    char* data = "{\"command\":\"write\", \"data\":\"Hello, world!\"}";
+    send(sockfd, data, strlen(data), 0);
+    // if ((numbytes = recv(sockfd, buf, MAXDATASIZE-1, 0)) == -1) {
+    //     perror("recv");
+    //     exit(1);
+    // }
 
-    buf[numbytes] = '\0';
+    // buf[numbytes] = '\0';
 
-    printf("client: received '%s'\n",buf);
+    // printf("client: received '%s'\n",buf);
 
     close(sockfd);
 
