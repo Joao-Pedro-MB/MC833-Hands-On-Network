@@ -14,11 +14,11 @@
 #include <arpa/inet.h>
 #include <sys/wait.h>
 #include <signal.h>
-#include "cJSON.h"
 
 #define PORT "3490"  // the port users will be connecting to
 # define IP "127.0.0.1" // the hardcoded IP for debugging purposes, will be deleted soon
 #define BACKLOG 10	 // how many pending connections queue will hold
+#define MAXDATASIZE 1000 // max number of bytes we can get at once
 
 void sigchld_handler(int s)
 {
@@ -48,14 +48,14 @@ int main(void) {
 
 	/*
 	struct addrinfo {
-    	int              ai_flags;     // AI_PASSIVE, AI_CANONNAME, etc.
-    	int              ai_family;    // AF_INET, AF_INET6, AF_UNSPEC
-    	int              ai_socktype;  // SOCK_STREAM, SOCK_DGRAM
-    	int              ai_protocol;  // use 0 for "any"
-    	size_t           ai_addrlen;   // size of ai_addr in bytes
-    	struct sockaddr *ai_addr;      // struct sockaddr_in or _in6
-    	char            *ai_canonname; // full canonical hostname
-    	struct addrinfo *ai_next;      // linked list, next node
+		int              ai_flags;     // AI_PASSIVE, AI_CANONNAME, etc.
+		int              ai_family;    // AF_INET, AF_INET6, AF_UNSPEC
+		int              ai_socktype;  // SOCK_STREAM, SOCK_DGRAM
+		int              ai_protocol;  // use 0 for "any"
+		size_t           ai_addrlen;   // size of ai_addr in bytes
+		struct sockaddr *ai_addr;      // struct sockaddr_in or _in6
+		char            *ai_canonname; // full canonical hostname
+		struct addrinfo *ai_next;      // linked list, next node
 	};
 	*/
 	struct addrinfo hints, *servinfo, *p;
@@ -156,36 +156,49 @@ int main(void) {
 			continue;
 		}
 
-		inet_ntop(their_addr.ss_family,
-			get_in_addr((struct sockaddr *)&their_addr),
-			s, sizeof s);
+		inet_ntop(their_addr.ss_family, get_in_addr((struct sockaddr *)&their_addr), s, sizeof s);
 		printf("server: got connection from %s\n", s);
 
-        if (!fork()) { // this is the child process
-            close(socket_listener_thread); // child doesn't need the listener
+		if (!fork()) { // this is the child process
+			close(socket_listener_thread); // child doesn't need the listener
 
-            printf("Entrou\n");
+			printf("Entrou\n");
 
-            char buffer[1024];
+			char buf[MAXDATASIZE];
 
-			/* int recv(int sockfd, void *buf, int len, int flags); */
-            int bytes_received = recv(socket_listener_thread, buffer, sizeof(buffer), 0);
-            
-            buffer[bytes_received] = '\0';
-            
-            cJSON *decoded_root = cJSON_Parse(buffer);
+			/* int recv(int socket file descriptor, void *buffer (point to buffer), int size of buffer, int flags);
+			the return value is the number of bytes actually read into buffer or -1 if an error ocurred
+			OBS: if the return is zero it means that the connection has closed by the other side */
+			int bytes_received = recv(socket_execution_thread, buf, MAXDATASIZE-1, 0);
+			
+			if (bytes_received == -1) {
+				perror("recv");
+				exit(1);
+			}
 
-            char *new_encoded_json = cJSON_Print(decoded_root);
+			printf("Leu\n");
+			//buffer[bytes_received] = '\0';
+			
+			//cJSON *decoded_root = cJSON_Parse(buffer);
 
-            printf("%s\n", new_encoded_json);
+			//char *new_encoded_json = cJSON_Print(decoded_root);
 
-            /* int send(int sockfd, const void *msg, int len, int flags); */
-            
-            close(socket_execution_thread);
-            exit(0);
-        }
-        close(socket_execution_thread);  // parent doesn't need this
-    }
+			buf[bytes_received] = '\0';
+
+			printf("server: received '%s'\n",buf);
+
+			/* int send(int sockfd, const void *msg, int len, int flags); */
+
+			if (send(socket_execution_thread, "Hello World!", 13, 0) == -1)
+				perror("send");
+			
+			printf("Enviou\n");
+			
+			close(socket_execution_thread);
+			exit(0);
+		}
+		close(socket_execution_thread);  // parent doesn't need this
+	}
 
 	return 0;
 }
