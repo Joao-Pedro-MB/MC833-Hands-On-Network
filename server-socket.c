@@ -14,6 +14,7 @@
 #include <arpa/inet.h>
 #include <sys/wait.h>
 #include <signal.h>
+#include "cJSON.h"
 
 #define PORT "3490"  // the port users will be connecting to
 
@@ -121,10 +122,23 @@ int main(void)
 
         if (!fork()) { // this is the child process
             close(sockfd); // child doesn't need the listener
+
+            printf("Entrou\n");
+
             char buffer[1024];
             int bytes_received = recv(sockfd, buffer, sizeof(buffer), 0);
+            
             buffer[bytes_received] = '\0';
-            printf("%s\n", buffer);
+            
+            cJSON *decoded_root = cJSON_Parse(buffer);
+
+            char *new_encoded_json = cJSON_Print(decoded_root);
+
+            printf("%s\n", new_encoded_json);
+
+            // cJSON* name = cJSON_GetObjectItem(decoded_root, "name");
+            // printf("Name: %s\n", name->valuestring);
+            
             close(new_fd);
             exit(0);
         }
