@@ -11,6 +11,7 @@
 #include <sys/types.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
+#include "cJSON.h"
 
 #include <arpa/inet.h>
 
@@ -78,14 +79,44 @@ int main(int argc, char *argv[])
 
     freeaddrinfo(servinfo); // all done with this structure
 
-    if ((numbytes = recv(sockfd, buf, MAXDATASIZE-1, 0)) == -1) {
-        perror("recv");
-        exit(1);
+    FILE *fp = fopen("example.json", "r");
+    
+    if (!fp) {
+        printf("Failed to open file\n");
+        return 1;
     }
 
-    buf[numbytes] = '\0';
+    // Read the JSON data from the file
+    fseek(fp, 0, SEEK_END);
+    long file_size = ftell(fp);
+    fseek(fp, 0, SEEK_SET);
+    char *json_data = malloc(file_size + 1);
+    fread(json_data, 1, file_size, fp);
+    fclose(fp);
 
-    printf("client: received '%s'\n",buf);
+    // Parse the JSON data into a cJSON object
+    cJSON *root = cJSON_Parse(json_data);
+
+    printf("%s\n", json_data);
+
+    cJSON* name = cJSON_GetObjectItem(root, "name");
+    printf("Name: %s\n", name->valuestring);
+
+    free(json_data);
+
+    // Encode the cJSON object as a JSON string
+    char *encoded_json = cJSON_Print(root);
+
+    // char* data = "{\"command\":\"write\", \"data\":\"Hello, world!\"}";
+    send(sockfd, encoded_json, strlen(encoded_json), 0);
+    // if ((numbytes = recv(sockfd, buf, MAXDATASIZE-1, 0)) == -1) {
+    //     perror("recv");
+    //     exit(1);
+    // }
+
+    // buf[numbytes] = '\0';
+
+    // printf("client: received '%s'\n",buf);
 
     close(sockfd);
 

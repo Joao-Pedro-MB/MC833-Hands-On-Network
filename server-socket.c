@@ -14,6 +14,7 @@
 #include <arpa/inet.h>
 #include <sys/wait.h>
 #include <signal.h>
+#include "cJSON.h"
 
 #define PORT "3490"  // the port users will be connecting to
 #define BACKLOG 10	 // how many pending connections queue will hold
@@ -120,15 +121,30 @@ int main(void)
 			s, sizeof s);
 		printf("server: got connection from %s\n", s);
 
-		if (!fork()) { // this is the child process
-			close(sockfd); // child doesn't need the listener
-			if (send(new_fd, "Hello, world!", 13, 0) == -1)
-				perror("send");
-			close(new_fd);
-			exit(0);
-		}
-		close(new_fd);  // parent doesn't need this
-	}
+        if (!fork()) { // this is the child process
+            close(sockfd); // child doesn't need the listener
+
+            printf("Entrou\n");
+
+            char buffer[1024];
+            int bytes_received = recv(sockfd, buffer, sizeof(buffer), 0);
+            
+            buffer[bytes_received] = '\0';
+            
+            cJSON *decoded_root = cJSON_Parse(buffer);
+
+            char *new_encoded_json = cJSON_Print(decoded_root);
+
+            printf("%s\n", new_encoded_json);
+
+            // cJSON* name = cJSON_GetObjectItem(decoded_root, "name");
+            // printf("Name: %s\n", name->valuestring);
+            
+            close(new_fd);
+            exit(0);
+        }
+        close(new_fd);  // parent doesn't need this
+    }
 
 	return 0;
 }
