@@ -43,8 +43,7 @@ void *get_in_addr(struct sockaddr *sa)
 	return &(((struct sockaddr_in6*)sa)->sin6_addr);
 }
 
-int main(void)
-{
+int main(void) {
 	int socket_listener_thread, socket_execution_thread;  // listen, new connection
 
 	/*
