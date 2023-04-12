@@ -70,30 +70,48 @@ int main(void)
 	char s[INET6_ADDRSTRLEN];// array with a IPv6 address size
 	int rv;
 
+	/* hitnts is a struct that define the parameters of addrinfo we are 
+	willing to accept like the following */
 	memset(&hints, 0, sizeof hints);
-	hints.ai_family = AF_UNSPEC;
-	hints.ai_socktype = SOCK_STREAM;
-	hints.ai_flags = AI_PASSIVE; // use my IP
+	hints.ai_family = AF_UNSPEC; /*we dont care if IPv4 or IPv6*/
+	hints.ai_socktype = SOCK_STREAM; /*we want a TCP connection*/
+	hints.ai_flags = AI_PASSIVE; /* use my IP where I do not define one like a
+									getaddrinfo with a NULL first field, as below */
 
-	if ((rv = getaddrinfo(NULL, PORT, &hints, &servinfo)) != 0) {
+	/*rv is just to cach possible errors of the function*/
+	rv = getaddrinfo(NULL /*host name like www.example.com or IP*/, 
+					 PORT /*service type like HTTP or PORT number*/, 
+					 &hints /*filter to possible answers*/, 
+					 &servinfo /*the actual answer of the function with a pointer to a linked-list of result*/);
+	if (rv != 0) {
+		/*gai_strerror returns a string explaining the error value returned by
+		the getaddrinfo funtion*/
 		fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rv));
 		return 1;
 	}
 
-	// loop through all the results and bind to the first we can
+	/* loop through all the results (possible conections) and bind to the first we can
+		in this exemple case we will bind to a PORT in our own machine */
 	for(p = servinfo; p != NULL; p = p->ai_next) {
-		if ((socket_listener_thread = socket(p->ai_family, p->ai_socktype,
-				p->ai_protocol)) == -1) {
+
+		/*returns a file descriptor for the socket*/
+		socket_listener_thread = socket(p->ai_family, p->ai_socktype, p->ai_protocol);
+		if (socket_listener_thread == -1) {
 			perror("server: socket");
 			continue;
 		}
-
+		
+		/* defines socket usage as in this case we are setting a reusage of address policy
+		to the socket level and set it as active by passing the "yes" value */
 		if (setsockopt(socket_listener_thread, SOL_SOCKET, SO_REUSEADDR, &yes,
 				sizeof(int)) == -1) {
 			perror("setsockopt");
 			exit(1);
 		}
 
+		/* once the socket is found and configured we try to bind or socket to a 
+		socket address i.e. IPv4 or IPv6 address + PORT
+		OBS: if we use connect we will not need to bind as we dont care which port or socket is runing on */
 		if (bind(socket_listener_thread, p->ai_addr, p->ai_addrlen) == -1) {
 			close(socket_listener_thread);
 			perror("server: bind");
@@ -103,6 +121,7 @@ int main(void)
 		break;
 	}
 
+	/* once or socket is binded we can free all the possible adresses we could use*/
 	freeaddrinfo(servinfo); // all done with this structure
 
 	if (p == NULL)  {
@@ -110,12 +129,14 @@ int main(void)
 		exit(1);
 	}
 
+	/* start to listen to that port for incoming requests */
 	if (listen(socket_listener_thread, BACKLOG) == -1) {
 		perror("listen");
 		exit(1);
 	}
 
-	sa.sa_handler = sigchld_handler; // reap all dead processes
+	/* reap all dead/zombie processes to avoid PID and dad memory spaces */
+	sa.sa_handler = sigchld_handler;
 	sigemptyset(&sa.sa_mask);
 	sa.sa_flags = SA_RESTART;
 	if (sigaction(SIGCHLD, &sa, NULL) == -1) {
@@ -125,7 +146,10 @@ int main(void)
 
 	printf("server: waiting for connections...\n");
 
+	/* handle incoming requests and create threads to serve them if accepted */
 	while(1) {  // main accept() loop
+
+		/* define size of address and accept the connection casting the "their_addr" sockaddr_storage structure to the right struct*/
 		sin_size = sizeof their_addr;
 		socket_execution_thread = accept(socket_listener_thread, (struct sockaddr *)&their_addr, &sin_size);
 		if (socket_execution_thread == -1) {
@@ -144,6 +168,8 @@ int main(void)
             printf("Entrou\n");
 
             char buffer[1024];
+
+			/* int recv(int sockfd, void *buf, int len, int flags); */
             int bytes_received = recv(socket_listener_thread, buffer, sizeof(buffer), 0);
             
             buffer[bytes_received] = '\0';
@@ -154,8 +180,7 @@ int main(void)
 
             printf("%s\n", new_encoded_json);
 
-            // cJSON* name = cJSON_GetObjectItem(decoded_root, "name");
-            // printf("Name: %s\n", name->valuestring);
+            /* int send(int sockfd, const void *msg, int len, int flags); */
             
             close(socket_execution_thread);
             exit(0);
