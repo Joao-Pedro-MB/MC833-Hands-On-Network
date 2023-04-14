@@ -27,7 +27,7 @@ void *get_in_addr(struct sockaddr *sa)
 	return &(((struct sockaddr_in6*)sa)->sin6_addr);
 }
 
-int use_server(void) {
+int start_server(void) {
 	int socket_listener_thread, socket_execution_thread;  // listen, new connection
 
 	/*
@@ -146,43 +146,24 @@ int use_server(void) {
 		if (!fork()) { // this is the child process
 			close(socket_listener_thread); // child doesn't need the listener
 
-			printf("Entrou\n");
-
-			char buf[MAXDATASIZE];
+			char request[MAXDATASIZE];
 
 			/* int recv(int socket file descriptor, void *buffer (point to buffer), int size of buffer, int flags);
 			the return value is the number of bytes actually read into buffer or -1 if an error ocurred
 			OBS: if the return is zero it means that the connection has closed by the other side */
-			int bytes_received = recv(socket_execution_thread, buf, MAXDATASIZE-1, 0);
+			int bytes_received = recv(socket_execution_thread, request, MAXDATASIZE-1, 0);
 			
 			if (bytes_received == -1) {
 				perror("recv");
 				exit(1);
 			}
 
-			printf("Leu\n");
-			
-			cJSON* root = cJSON_Parse(buf);
-            if (root == NULL) {
-                printf("Error parsing JSON: %s\n", cJSON_GetErrorPtr());
-                return 1;
-            }
+			request[bytes_received] = '\0';
 
-            buf[bytes_received] = '\0';
+			char * response = answer_request(request, bytes_received);
 
-			printf("server: received\n");
-
-            cJSON* operation = cJSON_GetObjectItem(root, "Command");
-			
-			printf("server: converted '%s'\n",buf);
-
-			test_server();
-
-            printf("the operation value is: %s\n", operation->valuestring);
-
-            if (send(socket_execution_thread, "Hello World!", 13, 0) == -1)
+            if (send(socket_execution_thread, response, strlen(response), 0) == -1)
                 perror("send");
-			printf("Enviou\n");
 			close(socket_execution_thread);
 			exit(0);
 		}

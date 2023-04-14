@@ -1,4 +1,3 @@
-#include <stdio.h>
 #include "client-socket.h"
 
 /*
@@ -12,18 +11,20 @@
 */
 
 char * format_message(char * Command, char * Field, char * Comparison_method, char * Value) {
-    char *root = cJSON_CreateObject();
+    cJSON *root = cJSON_CreateObject();
     cJSON_AddStringToObject(root, "Command", Command);
     cJSON_AddStringToObject(root, "Field", Field);
     cJSON_AddStringToObject(root, "Comparison Method", Comparison_method);
     cJSON_AddStringToObject(root, "Value", Value);
-    return cJSON_PrintUnformatted(root);
+    char * answer = cJSON_PrintUnformatted(root);
+    cJSON_Delete(root);
+    return return answer;
 }
 
 void parse_response(char * response) {
     cJSON *root = cJSON_Parse(response);
-    cJSON* message = cJSON_GetObjectItem(root, "message");
-    cJSON* status = cJSON_GetObjectItem(root, "status");
+    cJSON* message = cJSON_GetObjectItem(root, "Message");
+    cJSON* status = cJSON_GetObjectItem(root, "Status");
 
     if (status->valueint == 200){
         printf("Message: %s\n", message->valuestring);
