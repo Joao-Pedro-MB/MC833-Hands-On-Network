@@ -11,16 +11,30 @@
 • remover um perfil a partir de seu identificador (email);
 */
 
-cJSON * format_message(char * Command, char * Field, char * Comparison_method, char * Value) {
-    cJSON *root = cJSON_CreateObject();
+char * format_message(char * Command, char * Field, char * Comparison_method, char * Value) {
+    char *root = cJSON_CreateObject();
     cJSON_AddStringToObject(root, "Command", Command);
     cJSON_AddStringToObject(root, "Field", Field);
     cJSON_AddStringToObject(root, "Comparison Method", Comparison_method);
     cJSON_AddStringToObject(root, "Value", Value);
-    return root;
+    return cJSON_PrintUnformatted(root);
 }
 
-cJSON * create_new_user() {
+void parse_response(char * response) {
+    cJSON *root = cJSON_Parse(response);
+    cJSON* message = cJSON_GetObjectItem(root, "message");
+    cJSON* status = cJSON_GetObjectItem(root, "status");
+
+    if (status->valueint == 200){
+        printf("Message: %s\n", message->valuestring);
+
+    } else {
+        printf("Error: %d\n", status->valueint);
+        
+    } 
+}
+
+char * create_new_user() {
     char client_input[100];
     printf( "Type de new user's email:\n");
     scanf ("%s",client_input);
@@ -28,11 +42,11 @@ cJSON * create_new_user() {
     return format_message("create-profile", NULL, NULL, client_input);
 }
 
-cJSON * show_all_profiles() {
+char * show_all_profiles() {
     return format_message("show-all", NULL, NULL, NULL);
 }
 
-cJSON * search_group_of_profiles() {
+char * search_group_of_profiles() {
     char field[100], comparison_method[100], value[100];
     printf( "Type the field, comparison method(>, <, <=, >=, =, !=) and value devided by commas (ex: Age, >, 29):\n");
     scanf ("%s,%s,%s",field, comparison_method, value);
@@ -40,7 +54,7 @@ cJSON * search_group_of_profiles() {
     return format_message("search-batch", field, comparison_method, value);
 }
 
-cJSON * find_profile() {
+char * find_profile() {
     char client_input[100];
     printf( "Type de new user's email:\n");
     scanf ("%s",client_input);
@@ -48,7 +62,7 @@ cJSON * find_profile() {
     return format_message("search-profile", NULL, NULL, client_input);
 }
 
-cJSON * delete_profile() {
+char * delete_profile() {
     char client_input[100];
     printf( "Type de new user's email:\n");
     scanf ("%s",client_input);
@@ -69,7 +83,7 @@ int main () {
 
    printf( "\nYou entered: %d\n", client_input_int);
 
-   cJSON * request;
+   char * request, response;
 
     switch (client_input_int) {
         case 1:
@@ -97,5 +111,6 @@ int main () {
             exit(1);
     };
 
-    use_socket(request);
+    response = use_socket(request);
+    parse_response(response);
 }
