@@ -13,4 +13,4 @@ sh server.sh
 ```BASH
 sh client.sh
 ```
-If you yout computer does not support BASH scripts please just open the .sh files in the root of this project and copy paste the code in your terminal with the needed changes.
+If your computer does not support BASH scripts please just open the `.sh` files in the root of this project and copy paste the code in your terminal with the needed changes.
