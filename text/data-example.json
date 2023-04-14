@@ -1,0 +1,48 @@
+{
+    "name": "Pedro",
+    "age": 23,
+    "email": "example@example.com",
+    "address": {
+        "street": "Rua 1",
+        "number": 123,
+        "city": "São Paulo",
+        "state": "SP"
+    },
+    "phones": [
+        {
+            "type": "home",
+            "number": "12345678"
+        },
+        {
+            "type": "mobile",
+            "number": "987654321"
+        }
+    ],
+    "scholarity": [
+        {
+            "type": "high school",
+            "name": "Colégio X",
+            "year": 2010
+        },
+        {
+            "type": "university",
+            "name": "Universidade Y",
+            "year": 2014
+        }
+    ],
+    "skills": [
+        {
+            "name": "Java",
+            "level": "advanced"
+        },
+        {
+            "name": "Python",
+            "level": "intermediate"
+        },
+        {
+            "name": "C#",
+            "level": "beginner"
+        }
+    ]
+
+}
