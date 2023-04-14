@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include "server-socket.h"
 
 int main() {
     FILE *file;

@@ -1,6 +1,6 @@
 {
     "Action": "search-batch",
     "Field": "Age",
-    "Comparison_Method": ">", 
+    "Comparison Method": ">", 
     "Value": "2000"
 }
