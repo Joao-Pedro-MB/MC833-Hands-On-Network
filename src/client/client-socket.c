@@ -77,8 +77,6 @@ int use_socket(cJSON * request) {
     cJSON* name = cJSON_GetObjectItem(response, "name");
     printf("Name: %s\n", name->valuestring);  
 
-    cJSON* age = cJSON_GetObjectItem(response, "age");
-    printf("Age: %d\n", age->valueint);    
 
     close(sockfd);
 

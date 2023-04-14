@@ -27,5 +27,6 @@
 void sigchld_handler(int s);
 void *get_in_addr(struct sockaddr *sa);
 int use_server(void);
+void test_server(void);
 
 #endif // SERVER_SOCKET_H_

@@ -170,29 +170,23 @@ int use_server(void) {
 
             buf[bytes_received] = '\0';
 
-            cJSON* operation = cJSON_GetObjectItem(root, "operation");
+			printf("server: received\n");
+
+            cJSON* operation = cJSON_GetObjectItem(root, "Command");
 			
-			printf("server: received '%s'\n",buf);
-            
-			if (operation->valueint == 1) {
+			printf("server: converted '%s'\n",buf);
 
-                cJSON* root = cJSON_CreateObject();
+			test_server();
 
-                cJSON_AddStringToObject(root, "name", "John Doe");
-                cJSON_AddNumberToObject(root, "age", 22);
+            printf("the operation value is: %s\n", operation->valuestring);
 
-                char* json_str = cJSON_PrintUnformatted(root);
-
-                if (send(socket_execution_thread, json_str, strlen(json_str), 0) == -1)
-                    perror("send");
-			
+            if (send(socket_execution_thread, "Hello World!", 13, 0) == -1)
+                perror("send");
 			printf("Enviou\n");
-			
 			close(socket_execution_thread);
 			exit(0);
 		}
 		close(socket_execution_thread);  // parent doesn't need this
-		}
 	}
 
 	return 0;
