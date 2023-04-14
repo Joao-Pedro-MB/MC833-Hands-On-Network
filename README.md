@@ -2,7 +2,7 @@
 Repository for experiment with C language web sockets for TCP and UDP protocols
 
 # How to run
-To test the code in yout machine all you need to do is:
+To test the code in your machine all you need to do is:
 ```BASH
 sh build.sh
 ```
