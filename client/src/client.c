@@ -38,11 +38,39 @@ void parse_response(char * response) {
 }
 
 char * create_new_user() {
-    char client_input[100];
+    char email[100], name[100], age[10], city[100], state[100], scholarity[100], start_year[10], skills[1000];
     printf( "Type de new user's email:\n");
-    scanf ("%s",client_input);
+    scanf ("%s",email);
 
-    return format_message(CREATE_PROFILE, NULL, NULL, client_input);
+    printf( "Type de new user's name:\n");
+    scanf ("%s",name);
+
+    printf( "Type de new user's age:\n");
+    scanf ("%s",age);
+
+    printf( "Type de new user's city and state separated by comma (ex: city, state):\n");
+    scanf ("%s, %s",city, state);
+
+    printf( "Type de new user's scholarity level and start year separated by comma (ex: Computer Science Bachelor, 2019):\n");
+    scanf ("%s, %s", scholarity, start_year);
+
+    printf( "Type de new user's skills separated by comma (ex: Java, Python, C, ...):\n");
+    scanf ("%s", skills);
+
+    cJSON *root = cJSON_CreateObject();
+    cJSON_AddStringToObject(root, "name", name);
+    cJSON_AddStringToObject(root, "age", age);
+    cJSON_AddStringToObject(root, "email", email);
+    cJSON_AddStringToObject(root, "city", city);
+    cJSON_AddStringToObject(root, "state", state);
+    cJSON_AddStringToObject(root, "scholarity", scholarity);
+    cJSON_AddStringToObject(root, "skills", skills);
+    char * message = cJSON_PrintUnformatted(root);
+    cJSON_Delete(root);
+
+
+
+    return format_message(CREATE_PROFILE, NULL, NULL, message);
 }
 
 char * show_all_profiles() {
