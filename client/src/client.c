@@ -10,15 +10,17 @@
 • remover um perfil a partir de seu identificador (email);
 */
 
-char * format_message(char * Command, char * Field, char * Comparison_method, char * Value) {
+char * format_message(int Command, char * Field, char * Comparison_method, char * Value) {
+    char string_command[2];
+    sprintf(string_command, "%d", Command);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddStringToObject(root, "Command", Command);
+    cJSON_AddStringToObject(root, "Command", string_command);
     cJSON_AddStringToObject(root, "Field", Field);
     cJSON_AddStringToObject(root, "Comparison Method", Comparison_method);
     cJSON_AddStringToObject(root, "Value", Value);
     char * answer = cJSON_PrintUnformatted(root);
     cJSON_Delete(root);
-    return return answer;
+    return answer;
 }
 
 void parse_response(char * response) {
@@ -40,11 +42,11 @@ char * create_new_user() {
     printf( "Type de new user's email:\n");
     scanf ("%s",client_input);
 
-    return format_message("create-profile", NULL, NULL, client_input);
+    return format_message(CREATE_PROFILE, NULL, NULL, client_input);
 }
 
 char * show_all_profiles() {
-    return format_message("show-all", NULL, NULL, NULL);
+    return format_message(LIST_ALL, NULL, NULL, NULL);
 }
 
 char * search_group_of_profiles() {
@@ -52,7 +54,7 @@ char * search_group_of_profiles() {
     printf( "Type the field, comparison method(>, <, <=, >=, =, !=) and value devided by commas (ex: Age, >, 29):\n");
     scanf ("%s,%s,%s",field, comparison_method, value);
 
-    return format_message("search-batch", field, comparison_method, value);
+    return format_message(SEARCH_BATCH, field, comparison_method, value);
 }
 
 char * find_profile() {
@@ -60,7 +62,7 @@ char * find_profile() {
     printf( "Type de new user's email:\n");
     scanf ("%s",client_input);
 
-    return format_message("search-profile", NULL, NULL, client_input);
+    return format_message(FIND_PROFILE, NULL, NULL, client_input);
 }
 
 char * delete_profile() {
@@ -68,7 +70,7 @@ char * delete_profile() {
     printf( "Type de new user's email:\n");
     scanf ("%s",client_input);
 
-    return format_message("delete-profile", NULL, NULL, client_input);
+    return format_message(DELETE_PROFILE, NULL, NULL, client_input);
 }
 
 int main () {
@@ -84,7 +86,7 @@ int main () {
 
    printf( "\nYou entered: %d\n", client_input_int);
 
-   char * request, response;
+   char * request, * response;
 
     switch (client_input_int) {
         case 1:
@@ -112,6 +114,10 @@ int main () {
             exit(1);
     };
 
-    response = use_socket(request);
+    int err = use_socket(request, response);
+    if (err != 0) {
+        printf("Error: %d\n", err);
+        exit(1);
+    }
     parse_response(response);
 }

@@ -1,1 +1,1 @@
-./bin/build/client
+./client/bin/build/client

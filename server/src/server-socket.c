@@ -160,7 +160,7 @@ int start_server(void) {
 
 			request[bytes_received] = '\0';
 
-			char * response = answer_request(request, bytes_received);
+			char * response = answer_request(request);
 
             if (send(socket_execution_thread, response, strlen(response), 0) == -1)
                 perror("send");

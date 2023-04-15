@@ -17,8 +17,14 @@
 #define PORT "3490" // the port client will be connecting to
 #define MAXDATASIZE 1000 // max number of bytes we can get at once
 
+#define CREATE_PROFILE 1
+#define SEARCH_BATCH 2
+#define LIST_ALL 3
+#define FIND_PROFILE 4
+#define DELETE_PROFILE 5
+
 void *get_in_addr(struct sockaddr *sa);
 
-int use_socket(cJSON * request);
+int use_socket(char * request, char response[MAXDATASIZE]);
 
 #endif

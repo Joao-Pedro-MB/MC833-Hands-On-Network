@@ -15,8 +15,8 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/build)
 
 # Add source files for client executable
 add_executable(client
-    src/client/client.c
-    src/client/client-socket.c
+    src/client.c
+    src/client-socket.c
 )
 
 # Link cJSON library to the executable

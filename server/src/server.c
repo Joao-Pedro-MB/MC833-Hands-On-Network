@@ -15,24 +15,24 @@ char * answer_request(char * request) {
 
     cJSON * json_response = cJSON_CreateObject();
 
-    switch (command->valuestring) {
-        case "create-profile":
+    switch (command->valueint) {
+        case CREATE_PROFILE:
             //TODO: create new profile
             break;
 
-        case "search-batch":
+        case SEARCH_BATCH:
             //TODO: search group of profiles
             break;
 
-        case "show-all":
+        case LIST_ALL:
             //TODO: show all profiles
             break;
 
-        case "search-profile":
+        case FIND_PROFILE:
             //TODO: find profile
             break;
 
-        case "delete-profile":
+        case DELETE_PROFILE:
             //TODO: delete profile
             break;
 

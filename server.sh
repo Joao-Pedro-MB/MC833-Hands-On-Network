@@ -1,1 +1,1 @@
-./bin/build/server
+./server/bin/build/server

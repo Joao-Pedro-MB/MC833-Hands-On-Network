@@ -4,13 +4,13 @@
 
 #include "client-socket.h"
 
-void initialize_socket(int * sockfd, struct addrinfo * hints, struct addrinfo * servinfo, struct addrinfo * p, int * rv, s) {
-    memset(&hints, 0, sizeof hints);
-    hints.ai_family = AF_UNSPEC;
-    hints.ai_socktype = SOCK_STREAM;
+int initialize_socket(int * sockfd, struct addrinfo * hints, struct addrinfo * servinfo, struct addrinfo * p, int * rv, char * s) {
+    memset(hints, 0, sizeof hints);
+    hints->ai_family = AF_UNSPEC;
+    hints->ai_socktype = SOCK_STREAM;
 
-    if ((*rv = getaddrinfo(IP, PORT, hints, servinfo)) != 0) {
-        fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rv));
+    if ((*rv = getaddrinfo(IP, PORT, hints, &servinfo)) != 0) {
+        fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(*rv));
         return 1;
     }
     // loop through all the results and connect to the first we can
@@ -38,6 +38,8 @@ void initialize_socket(int * sockfd, struct addrinfo * hints, struct addrinfo * 
     inet_ntop(p->ai_family, get_in_addr((struct sockaddr *)p->ai_addr), s, sizeof s);
     printf("client: connecting to %s\n", s);
     freeaddrinfo(servinfo); // all done with this structure
+
+    return 0;
 }
 
 // get sockaddr, IPv4 or IPv6:
@@ -49,15 +51,17 @@ void *get_in_addr(struct sockaddr *sa) {
 	return &(((struct sockaddr_in6*)sa)->sin6_addr);
 }
 
-int use_socket(char * request) {
+int use_socket(char * request, char response[MAXDATASIZE]) {
 	
     int sockfd, bytes_received;
-    char response[MAXDATASIZE];
     struct addrinfo hints, *servinfo, *p;
     int rv;
     char s[INET6_ADDRSTRLEN];
 
-    initialize_socket(sockfd, &hints, servinfo, p, $rv, s);
+    int err = initialize_socket(&sockfd, &hints, servinfo, p, &rv, s);
+    if (err > 0) {
+        return err;
+    }
 
     if (send(sockfd, request, strlen(request), 0) == -1)
         perror("send");
@@ -73,5 +77,5 @@ int use_socket(char * request) {
 
     close(sockfd);
 
-    return response;
+    return 0;
 }

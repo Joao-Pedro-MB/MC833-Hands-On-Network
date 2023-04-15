@@ -1,5 +1,5 @@
 {
-    "Action": "search-batch",
+    "Action": SEARCH_BATCH,
     "Field": "Age",
     "Comparison Method": ">", 
     "Value": "2000"

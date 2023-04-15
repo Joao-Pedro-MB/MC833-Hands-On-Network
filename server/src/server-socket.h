@@ -24,6 +24,12 @@
 #define BACKLOG 10   // how many pending connections queue will hold
 #define MAXDATASIZE 1024 // max number of bytes we can get at once
 
+#define CREATE_PROFILE 1
+#define SEARCH_BATCH 2
+#define LIST_ALL 3
+#define FIND_PROFILE 4
+#define DELETE_PROFILE 5
+
 void sigchld_handler(int s);
 void *get_in_addr(struct sockaddr *sa);
 int start_server(void);
