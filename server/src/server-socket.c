@@ -4,56 +4,9 @@
 
 #include "server-socket.h"
 
+int initialize_socket(int * socket_listener_thread, struct addrinfo * hints, struct addrinfo * servinfo, struct addrinfo * p, struct sockaddr_storage * their_addr, socklen_t * sin_size, int * sa, int * yes, int * s, char * rv) {
 
-void sigchld_handler(int s)
-{
-	(void)s; // quiet unused variable warning
-
-	// waitpid() might overwrite errno, so we save and restore it:
-	int saved_errno = errno;
-
-	while(waitpid(-1, NULL, WNOHANG) > 0);
-
-	errno = saved_errno;
-}
-
-// get sockaddr, IPv4 or IPv6:
-void *get_in_addr(struct sockaddr *sa)
-{
-	if (sa->sa_family == AF_INET) {
-		return &(((struct sockaddr_in*)sa)->sin_addr);
-	}
-
-	return &(((struct sockaddr_in6*)sa)->sin6_addr);
-}
-
-int start_server(void) {
-	int socket_listener_thread, socket_execution_thread;  // listen, new connection
-
-	/*
-	struct addrinfo {
-		int              ai_flags;     // AI_PASSIVE, AI_CANONNAME, etc.
-		int              ai_family;    // AF_INET, AF_INET6, AF_UNSPEC
-		int              ai_socktype;  // SOCK_STREAM, SOCK_DGRAM
-		int              ai_protocol;  // use 0 for "any"
-		size_t           ai_addrlen;   // size of ai_addr in bytes
-		struct sockaddr *ai_addr;      // struct sockaddr_in or _in6
-		char            *ai_canonname; // full canonical hostname
-		struct addrinfo *ai_next;      // linked list, next node
-	};
-	*/
-	struct addrinfo hints, *servinfo, *p;
-
-	/*struct designed to handle IPv4 and IPv6 structures*/
-	struct sockaddr_storage their_addr; // connector's address information
-
-	socklen_t sin_size; // connectors expected adress size
-	struct sigaction sa; // signal action struct to handle a specific signal
-	int yes=1;
-	char s[INET6_ADDRSTRLEN];// array with a IPv6 address size
-	int rv;
-
-	/* hitnts is a struct that define the parameters of addrinfo we are 
+	/* hints is a struct that define the parameters of addrinfo we are 
 	willing to accept like the following */
 	memset(&hints, 0, sizeof hints);
 	hints.ai_family = AF_UNSPEC; /*we dont care if IPv4 or IPv6*/
@@ -113,19 +66,102 @@ int start_server(void) {
 	}
 
 	/* start to listen to that port for incoming requests */
-	if (listen(socket_listener_thread, BACKLOG) == -1) {
-		perror("listen");
-		exit(1);
+    if (listen(socket_listener_thread, BACKLOG) == -1) {
+        perror("listen");
+        exit(1);
+    }
+
+    return 0;
+}
+
+void sigchld_handler(int s)
+{
+	(void)s; // quiet unused variable warning
+
+	// waitpid() might overwrite errno, so we save and restore it:
+	int saved_errno = errno;
+
+	while(waitpid(-1, NULL, WNOHANG) > 0);
+
+	errno = saved_errno;
+}
+
+// get sockaddr, IPv4 or IPv6:
+void *get_in_addr(struct sockaddr *sa)
+{
+	if (sa->sa_family == AF_INET) {
+		return &(((struct sockaddr_in*)sa)->sin_addr);
 	}
 
+	return &(((struct sockaddr_in6*)sa)->sin6_addr);
+}
+
+void clean_zombies(int * sa) {
 	/* reap all dead/zombie processes to avoid PID and dad memory spaces */
-	sa.sa_handler = sigchld_handler;
-	sigemptyset(&sa.sa_mask);
-	sa.sa_flags = SA_RESTART;
-	if (sigaction(SIGCHLD, &sa, NULL) == -1) {
+	sa->sa_handler = sigchld_handler;
+	sigemptyset(&(sa->sa_mask));
+	sa->sa_flags = SA_RESTART;
+	if (sigaction(SIGCHLD, sa, NULL) == -1) {
 		perror("sigaction");
 		exit(1);
 	}
+}
+
+void execute_request(int * socket_execution_thread) {
+	char request[MAXDATASIZE];
+
+	/* int recv(int socket file descriptor, void *buffer (point to buffer), int size of buffer, int flags);
+	the return value is the number of bytes actually read into buffer or -1 if an error ocurred
+	OBS: if the return is zero it means that the connection has closed by the other side */
+	int bytes_received = recv(*socket_execution_thread, request, MAXDATASIZE-1, 0);
+		
+	if (bytes_received == -1) {
+		perror("recv");
+		exit(1);
+	}
+
+	request[bytes_received] = '\0';
+
+	char * response = answer_request(request);
+
+    if (send(*socket_execution_thread, response, strlen(response), 0) == -1)
+        perror("send");
+	close(*socket_execution_thread);
+	exit(0);
+}
+
+int start_server(void) {
+	int socket_listener_thread, socket_execution_thread;  // listen, new connection
+
+	/*
+	struct addrinfo {
+		int              ai_flags;     // AI_PASSIVE, AI_CANONNAME, etc.
+		int              ai_family;    // AF_INET, AF_INET6, AF_UNSPEC
+		int              ai_socktype;  // SOCK_STREAM, SOCK_DGRAM
+		int              ai_protocol;  // use 0 for "any"
+		size_t           ai_addrlen;   // size of ai_addr in bytes
+		struct sockaddr *ai_addr;      // struct sockaddr_in or _in6
+		char            *ai_canonname; // full canonical hostname
+		struct addrinfo *ai_next;      // linked list, next node
+	};
+	*/
+	struct addrinfo hints, *servinfo, *p;
+
+	/*struct designed to handle IPv4 and IPv6 structures*/
+	struct sockaddr_storage their_addr; // connector's address information
+
+	socklen_t sin_size; // connectors expected adress size
+	struct sigaction sa; // signal action struct to handle a specific signal
+	int yes=1;
+	char s[INET6_ADDRSTRLEN];// array with a IPv6 address size
+	int rv;
+
+	int err = initialize_socket(&socket_listener_thread, &hints, servinfo, p, &their_addr, &sin_size, &sa, &yes, &s, &rv);
+    if (err > 0) {
+        return err;
+    }
+
+	clear_zombies(&sa);
 
 	printf("server: waiting for connections...\n");
 
@@ -145,29 +181,9 @@ int start_server(void) {
 
 		if (!fork()) { // this is the child process
 			close(socket_listener_thread); // child doesn't need the listener
-
-			char request[MAXDATASIZE];
-
-			/* int recv(int socket file descriptor, void *buffer (point to buffer), int size of buffer, int flags);
-			the return value is the number of bytes actually read into buffer or -1 if an error ocurred
-			OBS: if the return is zero it means that the connection has closed by the other side */
-			int bytes_received = recv(socket_execution_thread, request, MAXDATASIZE-1, 0);
-			
-			if (bytes_received == -1) {
-				perror("recv");
-				exit(1);
-			}
-
-			request[bytes_received] = '\0';
-
-			char * response = answer_request(request);
-
-            if (send(socket_execution_thread, response, strlen(response), 0) == -1)
-                perror("send");
-			close(socket_execution_thread);
-			exit(0);
+			execute_request(socket_execution_thread);
 		}
-		close(socket_execution_thread);  // parent doesn't need this
+		close(&socket_execution_thread);  // parent doesn't need this
 	}
 
 	return 0;
