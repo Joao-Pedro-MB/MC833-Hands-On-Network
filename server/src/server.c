@@ -1,5 +1,14 @@
 #include "server-socket.h"
 
+cJSON * create_error_response(int status, char * message) {
+    cJSON * json_response = cJSON_CreateObject();
+
+    cJSON_AddNumberToObject(json_response, "Status", status);
+    cJSON_AddStringToObject(json_response, "Message", message);
+
+    return json_response;
+}
+
 cJSON * create_profile(cJSON * request) {
     printf("create_profile() called\n");
 
@@ -84,15 +93,6 @@ cJSON * delete_profile(cJSON * request) {
         cJSON_AddNumberToObject(json_response, "Status", 200);
         cJSON_AddStringToObject(json_response, "Message", "Profile deleted");
     }
-
-    return json_response;
-}
-
-cJSON * create_error_response(int status, char * message) {
-    cJSON * json_response = cJSON_CreateObject();
-
-    cJSON_AddNumberToObject(json_response, "Status", status);
-    cJSON_AddStringToObject(json_response, "Message", message);
 
     return json_response;
 }

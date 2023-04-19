@@ -4,25 +4,25 @@
 
 #include "server-socket.h"
 
-int initialize_socket(int * socket_listener_thread, struct addrinfo * hints, struct addrinfo * servinfo, struct addrinfo * p, struct sockaddr_storage * their_addr, socklen_t * sin_size, int * sa, int * yes, int * s, char * rv) {
+int initialize_socket(int * socket_listener_thread, struct addrinfo * hints, struct addrinfo * servinfo, struct addrinfo * p, struct sockaddr_storage * their_addr, socklen_t * sin_size, struct sigaction * sa, int * yes, char s[INET6_ADDRSTRLEN], int * rv) {
 
 	/* hints is a struct that define the parameters of addrinfo we are 
 	willing to accept like the following */
 	memset(&hints, 0, sizeof hints);
-	hints.ai_family = AF_UNSPEC; /*we dont care if IPv4 or IPv6*/
-	hints.ai_socktype = SOCK_STREAM; /*we want a TCP connection*/
-	hints.ai_flags = AI_PASSIVE; /* use my IP where I do not define one like a
+	hints->ai_family = AF_UNSPEC; /*we dont care if IPv4 or IPv6*/
+	hints->ai_socktype = SOCK_STREAM; /*we want a TCP connection*/
+	hints->ai_flags = AI_PASSIVE; /* use my IP where I do not define one like a
 									getaddrinfo with a NULL first field, as below */
 
 	/*rv is just to cach possible errors of the function*/
-	rv = getaddrinfo(NULL /*host name like www.example.com or IP*/, 
+	*rv = getaddrinfo(NULL /*host name like www.example.com or IP*/, 
 					 PORT /*service type like HTTP or PORT number*/, 
-					 &hints /*filter to possible answers*/, 
+					 hints /*filter to possible answers*/, 
 					 &servinfo /*the actual answer of the function with a pointer to a linked-list of result*/);
-	if (rv != 0) {
+	if (*rv != 0) {
 		/*gai_strerror returns a string explaining the error value returned by
 		the getaddrinfo funtion*/
-		fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rv));
+		fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(*rv));
 		return 1;
 	}
 
@@ -31,15 +31,15 @@ int initialize_socket(int * socket_listener_thread, struct addrinfo * hints, str
 	for(p = servinfo; p != NULL; p = p->ai_next) {
 
 		/*returns a file descriptor for the socket*/
-		socket_listener_thread = socket(p->ai_family, p->ai_socktype, p->ai_protocol);
-		if (socket_listener_thread == -1) {
+		*socket_listener_thread = socket(p->ai_family, p->ai_socktype, p->ai_protocol);
+		if (*socket_listener_thread == -1) {
 			perror("server: socket");
 			continue;
 		}
 		
 		/* defines socket usage as in this case we are setting a reusage of address policy
 		to the socket level and set it as active by passing the "yes" value */
-		if (setsockopt(socket_listener_thread, SOL_SOCKET, SO_REUSEADDR, &yes,
+		if (setsockopt(*socket_listener_thread, SOL_SOCKET, SO_REUSEADDR, yes,
 				sizeof(int)) == -1) {
 			perror("setsockopt");
 			exit(1);
@@ -48,8 +48,8 @@ int initialize_socket(int * socket_listener_thread, struct addrinfo * hints, str
 		/* once the socket is found and configured we try to bind or socket to a 
 		socket address i.e. IPv4 or IPv6 address + PORT
 		OBS: if we use connect we will not need to bind as we dont care which port or socket is runing on */
-		if (bind(socket_listener_thread, p->ai_addr, p->ai_addrlen) == -1) {
-			close(socket_listener_thread);
+		if (bind(*socket_listener_thread, p->ai_addr, p->ai_addrlen) == -1) {
+			close(*socket_listener_thread);
 			perror("server: bind");
 			continue;
 		}
@@ -66,7 +66,7 @@ int initialize_socket(int * socket_listener_thread, struct addrinfo * hints, str
 	}
 
 	/* start to listen to that port for incoming requests */
-    if (listen(socket_listener_thread, BACKLOG) == -1) {
+    if (listen(*socket_listener_thread, BACKLOG) == -1) {
         perror("listen");
         exit(1);
     }
@@ -96,7 +96,7 @@ void *get_in_addr(struct sockaddr *sa)
 	return &(((struct sockaddr_in6*)sa)->sin6_addr);
 }
 
-void clean_zombies(int * sa) {
+void clean_zombies(struct sigaction * sa) {
 	/* reap all dead/zombie processes to avoid PID and dad memory spaces */
 	sa->sa_handler = sigchld_handler;
 	sigemptyset(&(sa->sa_mask));
@@ -156,12 +156,12 @@ int start_server(void) {
 	char s[INET6_ADDRSTRLEN];// array with a IPv6 address size
 	int rv;
 
-	int err = initialize_socket(&socket_listener_thread, &hints, servinfo, p, &their_addr, &sin_size, &sa, &yes, &s, &rv);
+	int err = initialize_socket(&socket_listener_thread, &hints, servinfo, p, &their_addr, &sin_size, &sa, &yes, s, &rv);
     if (err > 0) {
         return err;
     }
 
-	clear_zombies(&sa);
+	clean_zombies(&sa);
 
 	printf("server: waiting for connections...\n");
 
@@ -181,9 +181,9 @@ int start_server(void) {
 
 		if (!fork()) { // this is the child process
 			close(socket_listener_thread); // child doesn't need the listener
-			execute_request(socket_execution_thread);
+			execute_request(&socket_execution_thread);
 		}
-		close(&socket_execution_thread);  // parent doesn't need this
+		close(socket_execution_thread);  // parent doesn't need this
 	}
 
 	return 0;
