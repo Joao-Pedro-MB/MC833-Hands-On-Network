@@ -4,17 +4,19 @@
 
 #include "server-socket.h"
 
-int initialize_socket(int * socket_listener_thread, struct addrinfo * hints, struct addrinfo * servinfo, struct addrinfo * p, struct sockaddr_storage * their_addr, socklen_t * sin_size, struct sigaction * sa, int * yes, char s[INET6_ADDRSTRLEN], int * rv) {
+int initialize_socket(int * socket_listener_thread, struct addrinfo * hints, struct addrinfo * servinfo, struct addrinfo * p, struct sockaddr_storage * their_addr, unsigned int * sin_size, struct sigaction * sa, int * yes, char * s, int * rv) {
 
 	/* hints is a struct that define the parameters of addrinfo we are 
 	willing to accept like the following */
-	memset(&hints, 0, sizeof hints);
+	printf("server inside initializing...\n");
+	memset(hints, 0, sizeof *hints);
 	hints->ai_family = AF_UNSPEC; /*we dont care if IPv4 or IPv6*/
 	hints->ai_socktype = SOCK_STREAM; /*we want a TCP connection*/
 	hints->ai_flags = AI_PASSIVE; /* use my IP where I do not define one like a
 									getaddrinfo with a NULL first field, as below */
 
 	/*rv is just to cach possible errors of the function*/
+	printf("server updating rv...\n");
 	*rv = getaddrinfo(NULL /*host name like www.example.com or IP*/, 
 					 PORT /*service type like HTTP or PORT number*/, 
 					 hints /*filter to possible answers*/, 
@@ -28,6 +30,7 @@ int initialize_socket(int * socket_listener_thread, struct addrinfo * hints, str
 
 	/* loop through all the results (possible conections) and bind to the first we can
 		in this exemple case we will bind to a PORT in our own machine */
+	printf("server entering for loop...\n");
 	for(p = servinfo; p != NULL; p = p->ai_next) {
 
 		/*returns a file descriptor for the socket*/
@@ -58,6 +61,7 @@ int initialize_socket(int * socket_listener_thread, struct addrinfo * hints, str
 	}
 
 	/* once or socket is binded we can free all the possible adresses we could use*/
+	printf("server freeing servinfo...\n");
 	freeaddrinfo(servinfo); // all done with this structure
 
 	if (p == NULL)  {
@@ -66,7 +70,8 @@ int initialize_socket(int * socket_listener_thread, struct addrinfo * hints, str
 	}
 
 	/* start to listen to that port for incoming requests */
-    if (listen(*socket_listener_thread, BACKLOG) == -1) {
+    printf("server listening...\n");
+	if (listen(*socket_listener_thread, BACKLOG) == -1) {
         perror("listen");
         exit(1);
     }
@@ -155,12 +160,13 @@ int start_server(void) {
 	int yes=1;
 	char s[INET6_ADDRSTRLEN];// array with a IPv6 address size
 	int rv;
-
+	printf("server initializing...\n");
 	int err = initialize_socket(&socket_listener_thread, &hints, servinfo, p, &their_addr, &sin_size, &sa, &yes, s, &rv);
     if (err > 0) {
         return err;
     }
 
+	printf("server cleaning zombies...\n");
 	clean_zombies(&sa);
 
 	printf("server: waiting for connections...\n");
