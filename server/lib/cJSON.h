@@ -113,7 +113,7 @@ typedef struct cJSON
 
     /* The item's string, if type==cJSON_String  and type == cJSON_Raw */
     char *valuestring;
-    /* writing to valueint is DEPRECATED, use cJSON_SetNumberValue instead */
+    /* writing to valueint is DEPRECATED, use cJSON_SetNumbervalue instead */
     int valueint;
     /* The item's number, if type==cJSON_Number */
     double valuedouble;
@@ -176,8 +176,8 @@ CJSON_PUBLIC(cJSON_bool) cJSON_HasObjectItem(const cJSON *object, const char *st
 CJSON_PUBLIC(const char *) cJSON_GetErrorPtr(void);
 
 /* Check item type and return its value */
-CJSON_PUBLIC(char *) cJSON_GetStringValue(const cJSON * const item);
-CJSON_PUBLIC(double) cJSON_GetNumberValue(const cJSON * const item);
+CJSON_PUBLIC(char *) cJSON_GetStringvalue(const cJSON * const item);
+CJSON_PUBLIC(double) cJSON_GetNumbervalue(const cJSON * const item);
 
 /* These functions check the type of an item */
 CJSON_PUBLIC(cJSON_bool) cJSON_IsInvalid(const cJSON * const item);
@@ -272,17 +272,17 @@ CJSON_PUBLIC(cJSON*) cJSON_AddObjectToObject(cJSON * const object, const char * 
 CJSON_PUBLIC(cJSON*) cJSON_AddArrayToObject(cJSON * const object, const char * const name);
 
 /* When assigning an integer value, it needs to be propagated to valuedouble too. */
-#define cJSON_SetIntValue(object, number) ((object) ? (object)->valueint = (object)->valuedouble = (number) : (number))
-/* helper for the cJSON_SetNumberValue macro */
+#define cJSON_SetIntvalue(object, number) ((object) ? (object)->valueint = (object)->valuedouble = (number) : (number))
+/* helper for the cJSON_SetNumbervalue macro */
 CJSON_PUBLIC(double) cJSON_SetNumberHelper(cJSON *object, double number);
-#define cJSON_SetNumberValue(object, number) ((object != NULL) ? cJSON_SetNumberHelper(object, (double)number) : (number))
+#define cJSON_SetNumbervalue(object, number) ((object != NULL) ? cJSON_SetNumberHelper(object, (double)number) : (number))
 /* Change the valuestring of a cJSON_String object, only takes effect when type of object is cJSON_String */
-CJSON_PUBLIC(char*) cJSON_SetValuestring(cJSON *object, const char *valuestring);
+CJSON_PUBLIC(char*) cJSON_Setvaluestring(cJSON *object, const char *valuestring);
 
 /* If the object is not a boolean type this does nothing and returns cJSON_Invalid else it returns the new type*/
-#define cJSON_SetBoolValue(object, boolValue) ( \
+#define cJSON_SetBoolvalue(object, boolvalue) ( \
     (object != NULL && ((object)->type & (cJSON_False|cJSON_True))) ? \
-    (object)->type=((object)->type &(~(cJSON_False|cJSON_True)))|((boolValue)?cJSON_True:cJSON_False) : \
+    (object)->type=((object)->type &(~(cJSON_False|cJSON_True)))|((boolvalue)?cJSON_True:cJSON_False) : \
     cJSON_Invalid\
 )
 

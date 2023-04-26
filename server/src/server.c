@@ -35,7 +35,7 @@ cJSON * access_database() {
 
 int write_database(cJSON * database) {
     // Open the JSON file for writing
-    FILE *fp = fopen("../database/database.json", "w");
+    FILE *fp = fopen("./server/database/database.json", "w");
     if (fp == NULL) {
         printf("Error: unable to open file.\n");
         exit(1);
@@ -65,14 +65,20 @@ cJSON * create_error_response(int status, char * message) {
 cJSON * create_profile(cJSON * request, cJSON * database) {
     printf("create_profile() called\n");
 
+    cJSON *request_value = cJSON_GetObjectItem(request, "value");
+    cJSON * parsed_value = cJSON_Parse(request_value);
+    printf("try to get object\n");
+    cJSON * age = cJSON_GetObjectItem(parsed_value, "age");
+    printf("string of age: %s\n", age->valuestring);
+
     cJSON * json_response, * new_profile = cJSON_CreateObject();
-    cJSON_AddStringToObject(new_profile, "name", "julia");
-    cJSON_AddNumberToObject(new_profile, "age", 25);
-    cJSON_AddStringToObject(new_profile, "email", "julia@example.com");
-    cJSON_AddStringToObject(new_profile, "city", "+1 555-123-4567");
-    cJSON_AddStringToObject(new_profile, "state", "+1 555-123-4567");
-    cJSON_AddStringToObject(new_profile, "scholarity", "+1 555-123-4567");
-    cJSON_AddStringToObject(new_profile, "skills", "+1 555-123-4567");
+    cJSON_AddStringToObject(new_profile, "name", cJSON_GetObjectItem(parsed_value, "name")->valuestring);
+    cJSON_AddNumberToObject(new_profile, "age", atoi(cJSON_GetObjectItem(parsed_value, "age")->valuestring));
+    cJSON_AddStringToObject(new_profile, "email", cJSON_GetObjectItem(parsed_value, "email")->valuestring);
+    cJSON_AddStringToObject(new_profile, "city", cJSON_GetObjectItem(parsed_value, "city")->valuestring);
+    cJSON_AddStringToObject(new_profile, "state", cJSON_GetObjectItem(parsed_value, "state")->valuestring);
+    cJSON_AddStringToObject(new_profile, "scholarity", cJSON_GetObjectItem(parsed_value, "scholarity")->valuestring);
+    cJSON_AddStringToObject(new_profile, "skills", cJSON_GetObjectItem(parsed_value, "skills")->valuestring);
 
     cJSON *profiles_array = cJSON_GetObjectItemCaseSensitive(database, "profiles");
 
@@ -167,12 +173,14 @@ char * answer_request(char * request) {
     printf("request: %s\n", request);
 
     cJSON * json_request = cJSON_Parse(request);
-    cJSON * command = cJSON_GetObjectItem(json_request, "Command");
+    cJSON * command = cJSON_GetObjectItem(json_request, "command");
+    int command_int = atoi(command->valuestring);
 
     cJSON * json_response = cJSON_CreateObject();
 
-    switch (command->valueint) {
+    switch (command_int) {
         case CREATE_PROFILE:
+            printf("Crating profile \n");
             json_response = create_profile(json_request, database);
             break;
 
@@ -197,7 +205,6 @@ char * answer_request(char * request) {
             break;
     };
 
-    write_database(database);
     char * response = cJSON_Print(json_response);
 
     cJSON_Delete(json_response);

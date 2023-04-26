@@ -10,14 +10,14 @@
 • remover um perfil a partir de seu identificador (email);
 */
 
-char * format_message(int Command, char * Field, char * Comparison_method, char * Value) {
+char * format_message(int command, char * field, char * Comparison_method, char * value) {
     char string_command[2];
-    sprintf(string_command, "%d", Command);
+    sprintf(string_command, "%d", command);
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddStringToObject(root, "Command", string_command);
-    cJSON_AddStringToObject(root, "Field", Field);
-    cJSON_AddStringToObject(root, "Comparison Method", Comparison_method);
-    cJSON_AddStringToObject(root, "Value", Value);
+    cJSON_AddStringToObject(root, "command", string_command);
+    cJSON_AddStringToObject(root, "field", field);
+    cJSON_AddStringToObject(root, "compare_method", Comparison_method);
+    cJSON_AddStringToObject(root, "value", value);
     char * answer = cJSON_PrintUnformatted(root);
     cJSON_Delete(root);
     return answer;
@@ -80,8 +80,8 @@ char * show_all_profiles() {
 
 char * search_group_of_profiles() {
     char field[100], comparison_method[100], value[100];
-    printf( "Type the field, comparison method(>, <, <=, >=, =, !=) and value devided by commas (ex: Age, >, 29):\n");
-    scanf ("%s,%s,%s",field, comparison_method, value);
+    printf( "Type the field, comparison method(>, <, <=, >=, ==, !=) and value devided by space (ex: Age > 29):\n");
+    scanf ("%s %s %s",field, comparison_method, value);
 
     return format_message(SEARCH_BATCH, field, comparison_method, value);
 }

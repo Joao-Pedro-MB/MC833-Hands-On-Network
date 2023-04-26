@@ -96,7 +96,7 @@ CJSON_PUBLIC(const char *) cJSON_GetErrorPtr(void)
     return (const char*) (global_error.json + global_error.position);
 }
 
-CJSON_PUBLIC(char *) cJSON_GetStringValue(const cJSON * const item)
+CJSON_PUBLIC(char *) cJSON_GetStringvalue(const cJSON * const item)
 {
     if (!cJSON_IsString(item))
     {
@@ -106,7 +106,7 @@ CJSON_PUBLIC(char *) cJSON_GetStringValue(const cJSON * const item)
     return item->valuestring;
 }
 
-CJSON_PUBLIC(double) cJSON_GetNumberValue(const cJSON * const item)
+CJSON_PUBLIC(double) cJSON_GetNumbervalue(const cJSON * const item)
 {
     if (!cJSON_IsNumber(item))
     {
@@ -378,7 +378,7 @@ loop_end:
     return true;
 }
 
-/* don't ask me, but the original cJSON_SetNumberValue returns an integer or double */
+/* don't ask me, but the original cJSON_SetNumbervalue returns an integer or double */
 CJSON_PUBLIC(double) cJSON_SetNumberHelper(cJSON *object, double number)
 {
     if (number >= INT_MAX)
@@ -397,7 +397,7 @@ CJSON_PUBLIC(double) cJSON_SetNumberHelper(cJSON *object, double number)
     return object->valuedouble = number;
 }
 
-CJSON_PUBLIC(char*) cJSON_SetValuestring(cJSON *object, const char *valuestring)
+CJSON_PUBLIC(char*) cJSON_Setvaluestring(cJSON *object, const char *valuestring)
 {
     char *copy = NULL;
     /* if object's type is not cJSON_String or is cJSON_IsReference, it should not set valuestring */

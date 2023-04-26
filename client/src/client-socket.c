@@ -70,6 +70,7 @@ int use_socket(char * request, char response[MAXDATASIZE]) {
         return err;
     }
     printf("client sending\n");
+    printf("request: %s\n\n", request);
     if (send(sockfd, request, strlen(request), 0) == -1)
         perror("send");
 
@@ -80,6 +81,8 @@ int use_socket(char * request, char response[MAXDATASIZE]) {
     }
 
     response[bytes_received] = '\0';
+
+    printf("reposnse: %s\n\n", response);
 
 
 
