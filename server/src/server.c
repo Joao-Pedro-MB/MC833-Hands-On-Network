@@ -79,6 +79,7 @@ cJSON * create_profile(cJSON * request, cJSON * database) {
     cJSON_AddStringToObject(new_profile, "state", cJSON_GetObjectItem(parsed_value, "state")->valuestring);
     cJSON_AddStringToObject(new_profile, "scholarity", cJSON_GetObjectItem(parsed_value, "scholarity")->valuestring);
     cJSON_AddStringToObject(new_profile, "skills", cJSON_GetObjectItem(parsed_value, "skills")->valuestring);
+    cJSON_AddNumberToObject(new_profile, "graduationYear", atoi(cJSON_GetObjectItem(parsed_value, "graduationYear")->valuestring));
 
     cJSON *profiles_array = cJSON_GetObjectItemCaseSensitive(database, "profiles");
 
@@ -149,21 +150,52 @@ cJSON * delete_profile(cJSON * request, cJSON * database) {
 
     cJSON * json_response = cJSON_CreateObject();
 
-    cJSON * name = cJSON_GetObjectItem(request, "Name");
-    cJSON * age = cJSON_GetObjectItem(request, "Age");
-    cJSON * email = cJSON_GetObjectItem(request, "Email");
-    cJSON * phone = cJSON_GetObjectItem(request, "Phone");
+    cJSON * email = cJSON_GetObjectItem(request, "value");
 
-    if (name == NULL && age == NULL && email == NULL && phone == NULL) {
+    if (email == NULL) {
         json_response = create_error_response(400, "Invalid request");
     } else {
+
+        cJSON *profiles_array = cJSON_GetObjectItemCaseSensitive(database, "profiles");
+
+        // Iterate over the array using cJSON_ArrayForEach
+        cJSON* item;
+        int index = 0;
+        int target_index = -1;
+
+        cJSON_ArrayForEach(item, profiles_array) {
+
+            if (strcmp(cJSON_GetObjectItem(item, "email")->valuestring, email->valuestring) == 0) {
+                target_index = index;
+            }
+
+            index += 1;
+        }
+
         cJSON * json_response = cJSON_CreateObject();
 
-        cJSON_AddNumberToObject(json_response, "Status", 200);
-        cJSON_AddStringToObject(json_response, "Message", "Profile deleted");
+        if (target_index > -1) {
+
+            cJSON_DeleteItemFromArray(profiles_array, target_index);
+
+            int err = write_database(database);
+
+            if (err != 0) {
+                json_response = create_error_response(400, "Invalid request");
+            } else {
+                cJSON_AddNumberToObject(json_response, "Status", 200);
+                cJSON_AddStringToObject(json_response, "Message", "Profile deleted");
+            }
+
+        } else {
+            json_response = create_error_response(404, "User not found");
+        }
+        
+        cJSON_Delete(profiles_array);
+        
+        return json_response;
     }
 
-    return json_response;
 }
 
 char * answer_request(char * request) {
