@@ -3,7 +3,7 @@
         {
             "name": "Pedro Um",
             "age": 23,
-            "email": "example@example.com",
+            "email": "example1@example.com",
             "city": "São Paulo",
             "state": "SP",
             "scholarity": "Computer",
@@ -13,7 +13,7 @@
         {
             "name": "Pedro Dois",
             "age": 23,
-            "email": "example@example.coma",
+            "email": "example2@example.com",
             "city": "São Paulo",
             "state": "SP",
             "scholarity": "Computer",
@@ -23,7 +23,7 @@
         {
             "name": "Pedro Três",
             "age": 23,
-            "email": "example@example.com",
+            "email": "example3@example.com",
             "city": "São Paulo",
             "state": "SP",
             "scholarity": "Medicine",
@@ -33,7 +33,7 @@
         {
             "name": "Pedro Quatro",
             "age": 23,
-            "email": "example@example.com",
+            "email": "example4@example.com",
             "city": "São Paulo",
             "state": "SP",
             "scholarity": "Computer Science",

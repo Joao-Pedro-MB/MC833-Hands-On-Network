@@ -82,7 +82,7 @@ int use_socket(char * request, char response[MAXDATASIZE]) {
 
     response[bytes_received] = '\0';
 
-    printf("reposnse: %s\n\n", response);
+    printf("response: %s\n\n", response);
 
 
 

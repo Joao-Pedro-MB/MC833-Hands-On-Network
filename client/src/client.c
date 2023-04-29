@@ -115,7 +115,8 @@ int main () {
 
    printf( "\nYou entered: %d\n", client_input_int);
 
-   char * request, * response;
+   char * request;
+   char response[MAXDATASIZE];
 
     switch (client_input_int) {
         case 1:
