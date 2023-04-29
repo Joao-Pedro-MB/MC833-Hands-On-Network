@@ -75,7 +75,7 @@ char * create_new_user() {
 }
 
 char * show_all_profiles() {
-    return format_message(LIST_ALL, NULL, NULL, NULL);
+    return format_message(LIST_ALL, "All", NULL, NULL);
 }
 
 char * search_group_of_profiles() {
