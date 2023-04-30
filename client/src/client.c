@@ -10,16 +10,27 @@
 • remover um perfil a partir de seu identificador (email);
 */
 
-char * format_message(int command, char * field, char * Comparison_method, char * value) {
+char * format_message(int command, char * field, char * comparison_method, char * value) {
     char string_command[2];
     sprintf(string_command, "%d", command);
     cJSON *root = cJSON_CreateObject();
     cJSON_AddStringToObject(root, "command", string_command);
     cJSON_AddStringToObject(root, "field", field);
-    cJSON_AddStringToObject(root, "compare_method", Comparison_method);
+    cJSON_AddStringToObject(root, "compare_method", comparison_method);
     cJSON_AddStringToObject(root, "value", value);
     char * answer = cJSON_PrintUnformatted(root);
     cJSON_Delete(root);
+
+    if (field != NULL) {
+        free(field);
+    }
+    if (comparison_method != NULL) {
+        free(comparison_method);
+    }
+    if (value != NULL) {
+        free(value);
+    }
+
     return answer;
 }
 
@@ -70,6 +81,7 @@ char * create_new_user() {
     cJSON_AddStringToObject(root, "skills", skills);
     char * message = cJSON_PrintUnformatted(root);
     cJSON_Delete(root);
+    printf("Message: %s\n", message);
 
     return format_message(CREATE_PROFILE, NULL, NULL, message);
 }
@@ -144,9 +156,12 @@ int main () {
     };
 
     int err = use_socket(request, response);
+    free(request);
+
     if (err != 0) {
         printf("Error: %d\n", err);
         exit(1);
     }
     parse_response(response);
+    free(response);
 }

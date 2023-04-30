@@ -61,7 +61,7 @@ int use_socket(char * request, char response[MAXDATASIZE]) {
 	
     int sockfd, bytes_received;  
     char buf[MAXDATASIZE];
-    struct addrinfo hints, *servinfo, *p;
+    struct addrinfo hints = {0}, *servinfo = NULL, *p = NULL;
     int rv;
     char s[INET6_ADDRSTRLEN];
     printf("client initializing\n");
@@ -82,9 +82,7 @@ int use_socket(char * request, char response[MAXDATASIZE]) {
 
     response[bytes_received] = '\0';
 
-    printf("reposnse: %s\n\n", response);
-
-
+    printf("response: %s\n\n", response);
 
     close(sockfd);
 
