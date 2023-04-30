@@ -49,27 +49,34 @@ void parse_response(char * response) {
 }
 
 char * create_new_user() {
-    char email[100], name[100], age[10], city[100], state[100], scholarity[100], start_year[10], skills[1000];
+    char email[100], name[100], age[100], city[100], state[100], scholarity[100], start_year[10], skills[1000];
     printf( "Type new user's email:\n");
-    scanf("%s",email);
+    fgets(email, sizeof(email), stdin);
+    email[strcspn(email, "\n")] = '\0';
 
     printf( "Type new user's name:\n");
-    scanf("%s",name);
+    fgets(name, sizeof(name), stdin);
+    name[strcspn(name, "\n")] = '\0';
 
     printf( "Type new user's age:\n");
-    scanf("%s",age);
+    fgets(age, sizeof(age), stdin);
+    age[strcspn(age, "\n")] = '\0';
 
     printf( "Type new user's city:\n");
-    scanf("%s",city);
+    fgets(city, sizeof(city), stdin);
+    city[strcspn(city, "\n")] = '\0';
 
-    printf( "Type new user's state:\n");
-    scanf("%s",state);
+    printf( "Type new user's state initials (ex: SP):\n");
+    fgets(state, sizeof(state), stdin);
+    state[strcspn(state, "\n")] = '\0';
 
     printf( "Type new user's scholarity level (ex: Computer Science Bachelor):\n");
-    scanf("%s", scholarity);
+    fgets(scholarity, sizeof(scholarity), stdin);
+    scholarity[strcspn(scholarity, "\n")] = '\0';
 
     printf( "Type de new user's skills separated by comma (ex: Java, Python, C, ...):\n");
-    scanf("%s", skills);
+    fgets(skills, sizeof(skills), stdin);
+    skills[strcspn(skills, "\n")] = '\0';
 
     cJSON *root = cJSON_CreateObject();
     cJSON_AddStringToObject(root, "name", name);
@@ -87,19 +94,26 @@ char * create_new_user() {
 }
 
 char * show_all_profiles() {
-    return format_message(LIST_ALL, "All", NULL, NULL);
+    char* field;
+    field = (char *) malloc(10 * sizeof(char));
+  
+  strncpy(field, "All", 3);
+  field[4] = '\0';
+    return format_message(LIST_ALL, field, NULL, NULL);
 }
 
 char * search_group_of_profiles() {
-    char field[100], comparison_method[100], value[100];
-    printf( "Type the field, comparison method(>, <, <=, >=, ==, !=) and value devided by space (ex: Age > 29):\n");
+    char* field = NULL;
+    char* comparison_method = NULL;
+    char* value = NULL;
+    printf( "Type the field, comparison method(>, <, ==, <=, >=, !=) and value devided by space (ex: Age > 29):\n");
     scanf ("%s %s %s",field, comparison_method, value);
 
     return format_message(SEARCH_BATCH, field, comparison_method, value);
 }
 
 char * find_profile() {
-    char client_input[100];
+    char* client_input;
     printf( "Type de new user's email:\n");
     scanf ("%s",client_input);
 
@@ -107,8 +121,9 @@ char * find_profile() {
 }
 
 char * delete_profile() {
-    char client_input[100];
-    printf( "Type de new user's email:\n");
+    char* client_input;
+    client_input = (char*) malloc(100*sizeof(char));
+    printf( "Type the user's email:\n");
     scanf ("%s",client_input);
 
     return format_message(DELETE_PROFILE, NULL, NULL, client_input);
@@ -116,16 +131,17 @@ char * delete_profile() {
 
 int main () {
     int client_input_int;
+    char trash[2];
+    
 
     printf( "Escolha a ação que deseja realizar digitando o número correspondente:\n\
      1 - cadastrar um novo perfil utilizando o email como identificador;\n\
-     2 - listar perfis com base em um critério (maior, menor, igual, contém, não contém);\n\
+     2 - listar perfis com base em um critério (>, <, ==, >=, <=, !=);\n\
      3 - listar todas as informações de todos os perfis;\n\
      4 - dado o email de um perfil, retornar suas informações;\n\
      5 - remover um perfil;\n");
     scanf ("%d",&client_input_int);
-
-   printf( "\nYou entered: %d\n", client_input_int);
+    trash[0] = getchar();
 
    char * request;
    char response[MAXDATASIZE];
@@ -164,5 +180,4 @@ int main () {
         exit(1);
     }
     parse_response(response);
-    free(response);
 }

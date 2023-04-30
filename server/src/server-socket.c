@@ -129,6 +129,8 @@ void execute_request(int * socket_execution_thread) {
 
 	char * response = answer_request(request);
 
+	printf("server: response '%s'\n", response);
+
     if (send(*socket_execution_thread, response, strlen(response), 0) == -1)
         perror("send");
 	close(*socket_execution_thread);
@@ -150,7 +152,7 @@ int start_server(void) {
 		struct addrinfo *ai_next;      // linked list, next node
 	};
 	*/
-	struct addrinfo hints, *servinfo, *p;
+	struct addrinfo hints = {0}, *servinfo = NULL, *p = NULL;
 
 	/*struct designed to handle IPv4 and IPv6 structures*/
 	struct sockaddr_storage their_addr; // connector's address information
@@ -159,7 +161,7 @@ int start_server(void) {
 	struct sigaction sa; // signal action struct to handle a specific signal
 	int yes=1;
 	char s[INET6_ADDRSTRLEN];// array with a IPv6 address size
-	int rv;
+	int rv=0;
 	printf("server initializing...\n");
 	int err = initialize_socket(&socket_listener_thread, &hints, servinfo, p, &their_addr, &sin_size, &sa, &yes, s, &rv);
     if (err > 0) {
@@ -190,6 +192,7 @@ int start_server(void) {
 			execute_request(&socket_execution_thread);
 		}
 		close(socket_execution_thread);  // parent doesn't need this
+
 	}
 
 	return 0;

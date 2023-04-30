@@ -75,7 +75,8 @@ int use_socket(char * request, char response[MAXDATASIZE]) {
         perror("send");
 
     printf("client receiving\n");
-    if ((bytes_received = recv(sockfd, response, MAXDATASIZE - 1, 0)) == -1) {
+    bytes_received = recv(sockfd, response, MAXDATASIZE - 1, 0);
+    if (bytes_received == -1) {
         perror("recv");
         exit(1);
     }
