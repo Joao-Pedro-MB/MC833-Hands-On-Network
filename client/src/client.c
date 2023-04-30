@@ -10,6 +10,34 @@
 • remover um perfil a partir de seu identificador (email);
 */
 
+void parse_string(char* input, char* field, char* operation, char* value) {
+    printf("Input: %s\n", input);
+    // Find the first space character in the input string
+    char * space_pos = strchr(input, ' ');
+    if (space_pos == NULL) {
+        printf("Invalid input string\n");
+        return;
+    }
+
+    // Copy the field string up to the first space character
+    strncpy(field, input, space_pos - input);
+    field[space_pos - input] = '\0';
+
+    // Find the second space character in the input string
+    char * second_space_pos = strchr(space_pos + 1, ' ');
+    if (second_space_pos == NULL) {
+        printf("Invalid input string\n");
+        return;
+    }
+
+    // Copy the operation string between the first and second space characters
+    strncpy(operation, space_pos + 1, second_space_pos - space_pos - 1);
+    operation[second_space_pos - space_pos - 1] = '\0';
+
+    // Copy the value string after the second space character
+    strcpy(value, second_space_pos + 1);
+}
+
 char * format_message(int command, char * field, char * comparison_method, char * value) {
     char string_command[2];
     sprintf(string_command, "%d", command);
@@ -103,18 +131,23 @@ char * show_all_profiles() {
 }
 
 char * search_group_of_profiles() {
-    char* field = NULL;
-    char* comparison_method = NULL;
-    char* value = NULL;
+    char* field = (char*) malloc(100*sizeof(char));
+    char* operation = (char*) malloc(100*sizeof(char));
+    char* value = (char*) malloc(100*sizeof(char));
+    char* input = (char*) malloc(1000*sizeof(char));
     printf( "Type the field, comparison method(>, <, ==, <=, >=, !=) and value devided by space (ex: Age > 29):\n");
-    scanf ("%s %s %s",field, comparison_method, value);
+    
+    fgets(input, 1000, stdin);
+    input[strcspn(input, "\n")] = '\0';
+    parse_string(input, field, operation, value);
 
-    return format_message(SEARCH_BATCH, field, comparison_method, value);
+    return format_message(SEARCH_BATCH, field, operation, value);
 }
 
 char * find_profile() {
     char* client_input;
-    printf( "Type de new user's email:\n");
+    client_input = (char*) malloc(100*sizeof(char));
+    printf( "Type the user's email:\n");
     scanf ("%s",client_input);
 
     return format_message(FIND_PROFILE, NULL, NULL, client_input);
