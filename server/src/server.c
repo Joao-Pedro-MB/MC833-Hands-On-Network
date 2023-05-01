@@ -48,81 +48,72 @@ cJSON* access_database() {
 }
 
 int convert_ASCII(char * input) {
-    int i = 0;
-    while (str[i] != '\0') {
-        sum += str[i];
+    int i = 0, sum = 0;
+    while (input[i] != '\0') {
+        sum += input[i];
         i++;
     }
     return sum;
 }
 
-int compare_values(cJSON* base, cJSON* operation, cJSON* target) {
-
-    switch (operation->valueint) {
-        case ">":
-            return (strcmp(target->valuestring, base->valuestring) > 0);
-        case "<":
-            return (strcmp(target->valuestring, base->valuestring) < 0);
-        case "==":
+int compare_strings(cJSON* base, cJSON* operation, cJSON* target) {
+    int operation_int = convert_ASCII(operation->valuestring);
+    switch (operation_int) {
+        case EQUAL:
             return (strcmp(target->valuestring, base->valuestring) == 0);
-        case "!=":
+        case NOT_EQUAL:
             return (strcmp(target->valuestring, base->valuestring) != 0);
-        case ">=":
-            return (strcmp(target->valuestring, base->valuestring) >= 0);
-        case "<=":
-            return (strcmp(target->valuestring, base->valuestring) <= 0);
         default:
             return -1;
     }
 }
 
-int find_word(char * data, char * target) {
-    int i, j, found;
+int compare_ints(cJSON* base, cJSON* operation, cJSON* target) {
+    int base_int = atoi(base->valuestring);
+    int target_int = atoi(target->valuestring);
+    printf("base: %d, target: %d\n", base_int, target_int);
+    switch (convert_ASCII(operation->valuestring)) {
+        case GREATER:
+            return (target_int > base_int);
+        case LESS:
+            return (target_int < base_int);
+        case EQUAL:
+            return (target_int == base_int);
+        case NOT_EQUAL:
+            return (target_int != base_int);
+        case GREATER_EQUAL:
+            return (target_int >= base_int);
+        case LESS_EQUAL:
+            return (target_int <= base_int);
+        default:
+            return -1;
+    }
+}
+
+int find_word(char * data, cJSON * operation, char * target) {
+    int i, j, found = 0, flag = 1;
+    int operation_int = convert_ASCII(operation->valuestring);
+
+    if (operation_int != EQUAL && operation_int != NOT_EQUAL) {
+        return -1;
+    }
+    if (operation_int == NOT_EQUAL) {
+        flag = 0;
+    }
 
     for(i=0; i<=strlen(data)-strlen(target); i++) {
         found = 1;
         for(j=0; j<strlen(target); j++) {
-            if(str[i+j] != word[j]) {
+            if(data[i+j] != target[j]) {
                 found = 0;
                 break;
             }
         }
         if(found) {
-            return 1;
+            return (found && flag);
         }
     }
-    return 0;
-}
-
-char * compare_database(cJSON* field, cJSON* operation, cJSON* value, cJSON* profiles_array) {
-    
-    
-    cJSON * response_array = cJSON_CreateArray();
-    if (field->valuestring != "skills"){
-        cJSON_ArrayForEach(item, profiles_array) {
-            if (compare_values(value, operation, cJSON_GetObjectItem(item, field->valuestring))) {
-                cJSON * user_profile = cJSON_CreateObject();
-                cJSON_AddStringToObject(user_profile, "name", cJSON_GetObjectItem(item, "name")->valuestring);
-                cJSON_AddStringToObject(user_profile, "email", cJSON_GetObjectItem(item, "email")->valuestring);
-                cJSON_AddStringToObject(user_profile, "graduationYear", cJSON_GetObjectItem(item, "graduationear")->valuestring);
-                cJSON_AddItemToArray(response_array, user_profile);
-            }
-    
-        }
-    } else {
-        cJSON_ArrayForEach(item, profiles_array) {
-            if (find_word(cJSON_GetObjectItem(item, field->valuestring), value)) {
-                cJSON * user_profile = cJSON_CreateObject();
-                cJSON_AddStringToObject(user_profile, "name", cJSON_GetObjectItem(item, "name")->valuestring);
-                cJSON_AddStringToObject(user_profile, "email", cJSON_GetObjectItem(item, "email")->valuestring);
-                cJSON_AddStringToObject(user_profile, "graduationYear", cJSON_GetObjectItem(item, "graduationear")->valuestring);
-                cJSON_AddItemToArray(response_array, user_profile);
-            }
-    
-        }
-    }
-
-    return cJSON_Print(response_array);
+    return !flag;
 }
 
 int write_database(cJSON* database) {
@@ -193,6 +184,64 @@ char* format_response(int status, char* message) {
     return json_str;
 }
 
+char* compare_database(cJSON* field, cJSON* operation, cJSON* value, cJSON* profiles_array) {
+    cJSON* response_array = cJSON_CreateArray();
+    int flag = 0;
+
+    printf("field: %s, value: %s\n", field->valuestring, value->valuestring);
+
+    if (strcmp(field->valuestring, "age") == 0 ||strcmp(field->valuestring, "graduationYear") == 0){
+        printf("vai comparar inteiros\n");
+        cJSON* item = NULL;
+        cJSON_ArrayForEach(item, profiles_array) {
+            printf("Esta comparando: item: %s e value: %s\n", cJSON_GetObjectItem(item, field->valuestring)->valuestring, value->valuestring);
+            flag = compare_ints(value, operation, cJSON_GetObjectItem(item, field->valuestring));
+            if (flag == 1) { // accessing valuestring property of the field
+                cJSON* user_profile = cJSON_CreateObject();
+                cJSON_AddStringToObject(user_profile, "name", cJSON_GetObjectItem(item, "name")->valuestring);
+                cJSON_AddStringToObject(user_profile, "email", cJSON_GetObjectItem(item, "email")->valuestring);
+                cJSON_AddStringToObject(user_profile, "graduationYear", cJSON_GetObjectItem(item, "graduationYear")->valuestring); // fix the typo
+                cJSON_AddItemToArray(response_array, user_profile);
+            } else if (flag == -1) {
+                return create_error_response(500, "Invalid operation");
+            }
+        }
+    
+    } else if (strcmp(field->valuestring, "skills") == 0) { // using strcmp() instead of string comparison operator
+        printf("vai caçar palavras\n");
+        cJSON* item = NULL;
+        cJSON_ArrayForEach(item, profiles_array) {
+            flag = find_word(cJSON_GetObjectItem(item, field->valuestring)->valuestring, operation, value->valuestring);
+            if (flag == 1) {
+                cJSON* user_profile = cJSON_CreateObject();
+                cJSON_AddStringToObject(user_profile, "name", cJSON_GetObjectItem(item, "name")->valuestring);
+                cJSON_AddStringToObject(user_profile, "email", cJSON_GetObjectItem(item, "email")->valuestring);
+                cJSON_AddItemToArray(response_array, user_profile);
+            } else if (flag == -1) {
+                return create_error_response(500, "Invalid operation");
+            }
+        }
+    } else {
+        printf("vai comparar strings\n");
+        cJSON* item = NULL;
+        cJSON_ArrayForEach(item, profiles_array) {
+            flag = compare_strings(cJSON_GetObjectItem(item, field->valuestring), operation, value);
+            if (flag == 1) { // accessing valuestring property of the field
+                cJSON* user_profile = cJSON_CreateObject();
+                cJSON_AddStringToObject(user_profile, "name", cJSON_GetObjectItem(item, "name")->valuestring);
+                cJSON_AddStringToObject(user_profile, "email", cJSON_GetObjectItem(item, "email")->valuestring);
+                cJSON_AddItemToArray(response_array, user_profile);
+            
+            } else if (flag == -1) {
+                return create_error_response(500, "Invalid operation");
+            }
+        }
+    }
+    char* response_str = cJSON_Print(response_array);
+    cJSON_Delete(response_array);
+    return format_response(200, response_str);
+}
+
 char* create_profile(cJSON* request, cJSON* database) {
     cJSON* request_value = cJSON_GetObjectItem(request, "value");
     cJSON* parsed_value = cJSON_Parse(request_value->valuestring);
@@ -253,11 +302,12 @@ char * search(cJSON * request, cJSON * database) {
     cJSON * profiles_array = cJSON_GetObjectItemCaseSensitive(database, "profiles");
 
     if (strcmp(field->valuestring, "All") == 0) {
-        cJSON_Delete(json_response);
         return format_response(200, cJSON_PrintUnformatted(profiles_array));
 
     } else {
+        printf("vai comparar no banco\n");
         return compare_database(field, operation, value, profiles_array);
+
     }
 }
 
