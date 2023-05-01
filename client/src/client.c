@@ -44,7 +44,7 @@ char * format_message(int command, char * field, char * comparison_method, char 
     cJSON *root = cJSON_CreateObject();
     cJSON_AddStringToObject(root, "command", string_command);
     cJSON_AddStringToObject(root, "field", field);
-    cJSON_AddStringToObject(root, "compare_method", comparison_method);
+    cJSON_AddStringToObject(root, "operation", comparison_method);
     cJSON_AddStringToObject(root, "value", value);
     char * answer = cJSON_PrintUnformatted(root);
     cJSON_Delete(root);
@@ -77,7 +77,7 @@ void parse_response(char * response) {
 }
 
 char * create_new_user() {
-    char email[100], name[100], age[100], city[100], state[100], scholarity[100], start_year[10], skills[1000];
+    char email[100], name[100], age[100], city[100], state[100], scholarity[100], graduationYear[10], skills[1000];
     printf( "Type new user's email:\n");
     fgets(email, sizeof(email), stdin);
     email[strcspn(email, "\n")] = '\0';
@@ -102,6 +102,10 @@ char * create_new_user() {
     fgets(scholarity, sizeof(scholarity), stdin);
     scholarity[strcspn(scholarity, "\n")] = '\0';
 
+    printf( "Type new user's graduation year (it can be in the future):\n");
+    fgets(graduationYear, sizeof(graduationYear), stdin);
+    graduationYear[strcspn(graduationYear, "\n")] = '\0';
+
     printf( "Type de new user's skills separated by comma (ex: Java, Python, C, ...):\n");
     fgets(skills, sizeof(skills), stdin);
     skills[strcspn(skills, "\n")] = '\0';
@@ -113,6 +117,7 @@ char * create_new_user() {
     cJSON_AddStringToObject(root, "city", city);
     cJSON_AddStringToObject(root, "state", state);
     cJSON_AddStringToObject(root, "scholarity", scholarity);
+    cJSON_AddStringToObject(root, "graduationYear", graduationYear);
     cJSON_AddStringToObject(root, "skills", skills);
     char * message = cJSON_PrintUnformatted(root);
     cJSON_Delete(root);

@@ -47,6 +47,84 @@ cJSON* access_database() {
     return database;
 }
 
+int convert_ASCII(char * input) {
+    int i = 0;
+    while (str[i] != '\0') {
+        sum += str[i];
+        i++;
+    }
+    return sum;
+}
+
+int compare_values(cJSON* base, cJSON* operation, cJSON* target) {
+
+    switch (operation->valueint) {
+        case ">":
+            return (strcmp(target->valuestring, base->valuestring) > 0);
+        case "<":
+            return (strcmp(target->valuestring, base->valuestring) < 0);
+        case "==":
+            return (strcmp(target->valuestring, base->valuestring) == 0);
+        case "!=":
+            return (strcmp(target->valuestring, base->valuestring) != 0);
+        case ">=":
+            return (strcmp(target->valuestring, base->valuestring) >= 0);
+        case "<=":
+            return (strcmp(target->valuestring, base->valuestring) <= 0);
+        default:
+            return -1;
+    }
+}
+
+int find_word(char * data, char * target) {
+    int i, j, found;
+
+    for(i=0; i<=strlen(data)-strlen(target); i++) {
+        found = 1;
+        for(j=0; j<strlen(target); j++) {
+            if(str[i+j] != word[j]) {
+                found = 0;
+                break;
+            }
+        }
+        if(found) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+char * compare_database(cJSON* field, cJSON* operation, cJSON* value, cJSON* profiles_array) {
+    
+    
+    cJSON * response_array = cJSON_CreateArray();
+    if (field->valuestring != "skills"){
+        cJSON_ArrayForEach(item, profiles_array) {
+            if (compare_values(value, operation, cJSON_GetObjectItem(item, field->valuestring))) {
+                cJSON * user_profile = cJSON_CreateObject();
+                cJSON_AddStringToObject(user_profile, "name", cJSON_GetObjectItem(item, "name")->valuestring);
+                cJSON_AddStringToObject(user_profile, "email", cJSON_GetObjectItem(item, "email")->valuestring);
+                cJSON_AddStringToObject(user_profile, "graduationYear", cJSON_GetObjectItem(item, "graduationear")->valuestring);
+                cJSON_AddItemToArray(response_array, user_profile);
+            }
+    
+        }
+    } else {
+        cJSON_ArrayForEach(item, profiles_array) {
+            if (find_word(cJSON_GetObjectItem(item, field->valuestring), value)) {
+                cJSON * user_profile = cJSON_CreateObject();
+                cJSON_AddStringToObject(user_profile, "name", cJSON_GetObjectItem(item, "name")->valuestring);
+                cJSON_AddStringToObject(user_profile, "email", cJSON_GetObjectItem(item, "email")->valuestring);
+                cJSON_AddStringToObject(user_profile, "graduationYear", cJSON_GetObjectItem(item, "graduationear")->valuestring);
+                cJSON_AddItemToArray(response_array, user_profile);
+            }
+    
+        }
+    }
+
+    return cJSON_Print(response_array);
+}
+
 int write_database(cJSON* database) {
     int status = 0;
     FILE* fp = NULL;
@@ -136,6 +214,8 @@ char* create_profile(cJSON* request, cJSON* database) {
     printf("Adding name to state\n");
     cJSON_AddStringToObject(new_profile, "scholarity", cJSON_GetObjectItem(parsed_value, "scholarity")->valuestring);
     printf("Adding name to scholarity\n");
+    cJSON_AddStringToObject(new_profile, "graduationYear", cJSON_GetObjectItem(parsed_value, "graduationYear")->valuestring);
+    printf("Adding name to graduationYear\n");
     cJSON_AddStringToObject(new_profile, "skills", cJSON_GetObjectItem(parsed_value, "skills")->valuestring);
     printf("Adding name to skills\n");
 
@@ -166,107 +246,19 @@ char* create_profile(cJSON* request, cJSON* database) {
 char * search(cJSON * request, cJSON * database) {
     printf("search() called\n");
 
-    cJSON * json_response = cJSON_CreateObject();
-
     cJSON * field = cJSON_GetObjectItem(request, "field");
     cJSON * value = cJSON_GetObjectItem(request, "value");
+    cJSON * operation = cJSON_GetObjectItem(request, "operation");
 
     cJSON * profiles_array = cJSON_GetObjectItemCaseSensitive(database, "profiles");
 
     if (strcmp(field->valuestring, "All") == 0) {
         cJSON_Delete(json_response);
         return format_response(200, cJSON_PrintUnformatted(profiles_array));
-    }
-
-    else if (strcmp(field->valuestring, "Skills") == 0  && value != NULL) {
-
-        cJSON * response_array = cJSON_CreateArray();
-
-        cJSON* item;
-
-        cJSON_ArrayForEach(item, profiles_array) {
-
-            if (strstr(cJSON_GetObjectItem(item, "skills")->valuestring, value->valuestring)) {
-
-                cJSON * user_profile = cJSON_CreateObject();
-
-                cJSON_AddStringToObject(user_profile, "name", cJSON_GetObjectItem(item, "name")->valuestring);
-                cJSON_AddStringToObject(user_profile, "email", cJSON_GetObjectItem(item, "email")->valuestring);
-                cJSON_AddItemToArray(response_array, user_profile);
-                
-            }
-
-        }
-
-        cJSON_AddItemToObject(json_response, "Profiles", response_array);
-        cJSON_AddNumberToObject(json_response, "Status", 200);
-        cJSON_AddStringToObject(json_response, "Message", "Profiles found by Skill");
-        cJSON_Delete(item);
-
-    }
-
-    else if (strcmp(field->valuestring, "Scholarity") == 0 && value != NULL) {
-
-        cJSON * response_array = cJSON_CreateArray();
-
-        cJSON* item;
-
-        cJSON_ArrayForEach(item, profiles_array) {
-
-            if (strcmp(cJSON_GetObjectItem(item, "scholarity")->valuestring, value->valuestring) == 0) {
-
-                cJSON * user_profile = cJSON_CreateObject();
-
-                cJSON_AddStringToObject(user_profile, "name", cJSON_GetObjectItem(item, "name")->valuestring);
-                cJSON_AddStringToObject(user_profile, "email", cJSON_GetObjectItem(item, "email")->valuestring);
-                cJSON_AddItemToArray(response_array, user_profile);
-                
-            }
-
-        }
-
-        cJSON_AddItemToObject(json_response, "Profiles", response_array);
-        cJSON_AddNumberToObject(json_response, "Status", 200);
-        cJSON_AddStringToObject(json_response, "Message", "Profiles found by Scholarity");
-        cJSON_Delete(item);
-
-    }
-
-    else if (strcmp(field->valuestring, "GraduationYear") == 0  && value != NULL) {
-
-        cJSON * response_array = cJSON_CreateArray();
-
-        cJSON* item;
-
-        cJSON_ArrayForEach(item, profiles_array) {
-
-            if (cJSON_GetObjectItem(item, "graduationYear")->valueint == atoi(value->valuestring)) {
-                
-                cJSON * user_profile = cJSON_CreateObject();
-
-                cJSON_AddStringToObject(user_profile, "name", cJSON_GetObjectItem(item, "name")->valuestring);
-                cJSON_AddStringToObject(user_profile, "email", cJSON_GetObjectItem(item, "email")->valuestring);
-                cJSON_AddItemToArray(response_array, user_profile);
-
-            }
-
-        }
-
-        cJSON_AddItemToObject(json_response, "Profiles", response_array);
-        cJSON_AddNumberToObject(json_response, "Status", 200);
-        cJSON_AddStringToObject(json_response, "Message", "Profiles found by Graduation Year");
-        cJSON_Delete(item);
 
     } else {
-        cJSON_Delete(json_response);
-        return create_error_response(400, "Invalid request");
+        return compare_database(field, operation, value, profiles_array);
     }
-
-    char * string_response = cJSON_PrintUnformatted(json_response);
-
-    cJSON_Delete(json_response);
-
-    return string_response;
 }
 
 char * search_profile(cJSON * request, cJSON * database) {
