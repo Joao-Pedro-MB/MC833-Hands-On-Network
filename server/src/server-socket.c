@@ -4,11 +4,11 @@
 
 #include "server-socket.h"
 
-int initialize_socket(int * socket_listener_thread, struct addrinfo * hints, struct addrinfo * servinfo, struct addrinfo * p, struct sockaddr_storage * their_addr, socklen_t * sin_size, struct sigaction * sa, int * yes, char s[INET6_ADDRSTRLEN], int * rv) {
+int initialize_socket(int * socket_listener_thread, struct addrinfo * hints, struct addrinfo * servinfo, struct addrinfo * p, struct sockaddr_storage * their_addr, unsigned int * sin_size, struct sigaction * sa, int * yes, char * s, int * rv) {
 
 	/* hints is a struct that define the parameters of addrinfo we are 
 	willing to accept like the following */
-	memset(&hints, 0, sizeof hints);
+	memset(hints, 0, sizeof *hints);
 	hints->ai_family = AF_UNSPEC; /*we dont care if IPv4 or IPv6*/
 	hints->ai_socktype = SOCK_STREAM; /*we want a TCP connection*/
 	hints->ai_flags = AI_PASSIVE; /* use my IP where I do not define one like a
@@ -66,7 +66,8 @@ int initialize_socket(int * socket_listener_thread, struct addrinfo * hints, str
 	}
 
 	/* start to listen to that port for incoming requests */
-    if (listen(*socket_listener_thread, BACKLOG) == -1) {
+    printf("server listening...\n");
+	if (listen(*socket_listener_thread, BACKLOG) == -1) {
         perror("listen");
         exit(1);
     }
@@ -124,6 +125,8 @@ void execute_request(int * socket_execution_thread) {
 
 	char * response = answer_request(request);
 
+	printf("server: response '%s'\n", response);
+
     if (send(*socket_execution_thread, response, strlen(response), 0) == -1)
         perror("send");
 	close(*socket_execution_thread);
@@ -145,7 +148,7 @@ int start_server(void) {
 		struct addrinfo *ai_next;      // linked list, next node
 	};
 	*/
-	struct addrinfo hints, *servinfo, *p;
+	struct addrinfo hints = {0}, *servinfo = NULL, *p = NULL;
 
 	/*struct designed to handle IPv4 and IPv6 structures*/
 	struct sockaddr_storage their_addr; // connector's address information
@@ -154,13 +157,14 @@ int start_server(void) {
 	struct sigaction sa; // signal action struct to handle a specific signal
 	int yes=1;
 	char s[INET6_ADDRSTRLEN];// array with a IPv6 address size
-	int rv;
-
+	int rv=0;
+	printf("server initializing...\n");
 	int err = initialize_socket(&socket_listener_thread, &hints, servinfo, p, &their_addr, &sin_size, &sa, &yes, s, &rv);
     if (err > 0) {
         return err;
     }
 
+	printf("server cleaning zombies...\n");
 	clean_zombies(&sa);
 
 	printf("server: waiting for connections...\n");
@@ -184,6 +188,7 @@ int start_server(void) {
 			execute_request(&socket_execution_thread);
 		}
 		close(socket_execution_thread);  // parent doesn't need this
+
 	}
 
 	return 0;

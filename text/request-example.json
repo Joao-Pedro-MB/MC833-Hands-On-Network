@@ -1,6 +1,6 @@
 {
-    "Command": SEARCH_BATCH,
-    "Field": "Age",
-    "Comparison Method": ">", 
-    "Value": "2000"
+    "command": SEARCH_BATCH,
+    "field": "Age",
+    "operation": ">", 
+    "value": "2000"
 }

@@ -5,10 +5,12 @@
 #include "client-socket.h"
 
 int initialize_socket(int * sockfd, struct addrinfo * hints, struct addrinfo * servinfo, struct addrinfo * p, int * rv, char * s) {
-    memset(hints, 0, sizeof hints);
+    memset(hints, 0, sizeof *hints);
     hints->ai_family = AF_UNSPEC;
     hints->ai_socktype = SOCK_STREAM;
 
+
+    printf("client geting addrinfo\n");
     if ((*rv = getaddrinfo(IP, PORT, hints, &servinfo)) != 0) {
         fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(*rv));
         return 1;
@@ -16,6 +18,7 @@ int initialize_socket(int * sockfd, struct addrinfo * hints, struct addrinfo * s
     // loop through all the results and connect to the first we can
     for(p = servinfo; p != NULL; p = p->ai_next) {
 
+        printf("client testing socket\n");
         if ((*sockfd = socket(p->ai_family, p->ai_socktype, p->ai_protocol)) == -1) {
             perror("client: socket");
             continue;
@@ -53,27 +56,31 @@ void *get_in_addr(struct sockaddr *sa) {
 
 int use_socket(char * request, char response[MAXDATASIZE]) {
 	
-    int sockfd, bytes_received;
-    struct addrinfo hints, *servinfo, *p;
+    int sockfd, bytes_received;  
+    char buf[MAXDATASIZE];
+    struct addrinfo hints = {0}, *servinfo = NULL, *p = NULL;
     int rv;
     char s[INET6_ADDRSTRLEN];
-
+    printf("client initializing\n");
     int err = initialize_socket(&sockfd, &hints, servinfo, p, &rv, s);
     if (err > 0) {
         return err;
     }
-
+    printf("client sending\n");
+    printf("request: %s\n\n", request);
     if (send(sockfd, request, strlen(request), 0) == -1)
         perror("send");
 
-    if ((bytes_received = recv(sockfd, response, MAXDATASIZE - 1, 0)) == -1) {
+    printf("client receiving\n");
+    bytes_received = recv(sockfd, response, MAXDATASIZE - 1, 0);
+    if (bytes_received == -1) {
         perror("recv");
         exit(1);
     }
 
     response[bytes_received] = '\0';
 
-
+    printf("response: %s\n\n", response);
 
     close(sockfd);
 

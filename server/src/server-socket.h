@@ -30,6 +30,14 @@
 #define FIND_PROFILE 4
 #define DELETE_PROFILE 5
 
+#define GREATER 62
+#define LESS 60
+#define EQUAL 122
+#define GREATER_EQUAL 123
+#define LESS_EQUAL 121
+#define NOT_EQUAL 94
+
+
 void sigchld_handler(int s);
 void *get_in_addr(struct sockaddr *sa);
 int start_server(void);
