@@ -11,7 +11,6 @@
 */
 
 void parse_string(char* input, char* field, char* operation, char* value) {
-    printf("Input: %s\n", input);
     // Find the first space character in the input string
     char * space_pos = strchr(input, ' ');
     if (space_pos == NULL) {
@@ -71,7 +70,7 @@ void parse_response(char * response) {
         printf("Message: %s\n", message->valuestring);
 
     } else {
-        printf("Error: %d\n", status->valueint);
+        printf("Error: %s, Message: %s\n", status->valuestring, message->valuestring);
         
     } 
 }
@@ -121,7 +120,6 @@ char * create_new_user() {
     cJSON_AddStringToObject(root, "skills", skills);
     char * message = cJSON_PrintUnformatted(root);
     cJSON_Delete(root);
-    printf("Message: %s\n", message);
 
     return format_message(CREATE_PROFILE, NULL, NULL, message);
 }

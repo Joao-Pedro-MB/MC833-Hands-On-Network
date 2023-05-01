@@ -5,7 +5,6 @@
 #include "client-socket.h"
 
 int initialize_socket(int * sockfd, struct addrinfo * hints, struct addrinfo * servinfo, struct addrinfo * p, int * rv, char * s) {
-    printf("client inside initializing\n");
     memset(hints, 0, sizeof *hints);
     hints->ai_family = AF_UNSPEC;
     hints->ai_socktype = SOCK_STREAM;
@@ -17,11 +16,9 @@ int initialize_socket(int * sockfd, struct addrinfo * hints, struct addrinfo * s
         return 1;
     }
     // loop through all the results and connect to the first we can
-    printf("client looping\n");
     for(p = servinfo; p != NULL; p = p->ai_next) {
 
         printf("client testing socket\n");
-        printf("client ai_socktype: %d\n", p->ai_socktype);
         if ((*sockfd = socket(p->ai_family, p->ai_socktype, p->ai_protocol)) == -1) {
             perror("client: socket");
             continue;

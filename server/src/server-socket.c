@@ -8,7 +8,6 @@ int initialize_socket(int * socket_listener_thread, struct addrinfo * hints, str
 
 	/* hints is a struct that define the parameters of addrinfo we are 
 	willing to accept like the following */
-	printf("server inside initializing...\n");
 	memset(hints, 0, sizeof *hints);
 	hints->ai_family = AF_UNSPEC; /*we dont care if IPv4 or IPv6*/
 	hints->ai_socktype = SOCK_STREAM; /*we want a TCP connection*/
@@ -16,7 +15,6 @@ int initialize_socket(int * socket_listener_thread, struct addrinfo * hints, str
 									getaddrinfo with a NULL first field, as below */
 
 	/*rv is just to cach possible errors of the function*/
-	printf("server updating rv...\n");
 	*rv = getaddrinfo(NULL /*host name like www.example.com or IP*/, 
 					 PORT /*service type like HTTP or PORT number*/, 
 					 hints /*filter to possible answers*/, 
@@ -30,7 +28,6 @@ int initialize_socket(int * socket_listener_thread, struct addrinfo * hints, str
 
 	/* loop through all the results (possible conections) and bind to the first we can
 		in this exemple case we will bind to a PORT in our own machine */
-	printf("server entering for loop...\n");
 	for(p = servinfo; p != NULL; p = p->ai_next) {
 
 		/*returns a file descriptor for the socket*/
@@ -61,7 +58,6 @@ int initialize_socket(int * socket_listener_thread, struct addrinfo * hints, str
 	}
 
 	/* once or socket is binded we can free all the possible adresses we could use*/
-	printf("server freeing servinfo...\n");
 	freeaddrinfo(servinfo); // all done with this structure
 
 	if (p == NULL)  {

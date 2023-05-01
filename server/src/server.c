@@ -188,13 +188,9 @@ char* compare_database(cJSON* field, cJSON* operation, cJSON* value, cJSON* prof
     cJSON* response_array = cJSON_CreateArray();
     int flag = 0;
 
-    printf("field: %s, value: %s\n", field->valuestring, value->valuestring);
-
     if (strcmp(field->valuestring, "age") == 0 ||strcmp(field->valuestring, "graduationYear") == 0){
-        printf("vai comparar inteiros\n");
         cJSON* item = NULL;
         cJSON_ArrayForEach(item, profiles_array) {
-            printf("Esta comparando: item: %s e value: %s\n", cJSON_GetObjectItem(item, field->valuestring)->valuestring, value->valuestring);
             flag = compare_ints(value, operation, cJSON_GetObjectItem(item, field->valuestring));
             if (flag == 1) { // accessing valuestring property of the field
                 cJSON* user_profile = cJSON_CreateObject();
@@ -208,7 +204,6 @@ char* compare_database(cJSON* field, cJSON* operation, cJSON* value, cJSON* prof
         }
     
     } else if (strcmp(field->valuestring, "skills") == 0) { // using strcmp() instead of string comparison operator
-        printf("vai caçar palavras\n");
         cJSON* item = NULL;
         cJSON_ArrayForEach(item, profiles_array) {
             flag = find_word(cJSON_GetObjectItem(item, field->valuestring)->valuestring, operation, value->valuestring);
@@ -222,7 +217,6 @@ char* compare_database(cJSON* field, cJSON* operation, cJSON* value, cJSON* prof
             }
         }
     } else {
-        printf("vai comparar strings\n");
         cJSON* item = NULL;
         cJSON_ArrayForEach(item, profiles_array) {
             flag = compare_strings(cJSON_GetObjectItem(item, field->valuestring), operation, value);
@@ -247,34 +241,20 @@ char* create_profile(cJSON* request, cJSON* database) {
     cJSON* parsed_value = cJSON_Parse(request_value->valuestring);
     cJSON* new_profile = cJSON_CreateObject();
 
-    printf("request_value: %s\n", cJSON_PrintUnformatted(request_value));
-    printf("request_value: %s\n", cJSON_PrintUnformatted(parsed_value));
-    printf("name: %s\n", cJSON_GetObjectItem(parsed_value, "name")->valuestring);
-
     cJSON_AddStringToObject(new_profile, "name", cJSON_GetObjectItem(parsed_value, "name")->valuestring);
-    printf("Adding name to profile\n");
     cJSON_AddStringToObject(new_profile, "age", cJSON_GetObjectItem(parsed_value, "age")->valuestring);
-    printf("Adding name to age\n");
     cJSON_AddStringToObject(new_profile, "email", cJSON_GetObjectItem(parsed_value, "email")->valuestring);
-    printf("Adding name to email\n");
     cJSON_AddStringToObject(new_profile, "city", cJSON_GetObjectItem(parsed_value, "city")->valuestring);
-    printf("Adding name to city\n");
     cJSON_AddStringToObject(new_profile, "state", cJSON_GetObjectItem(parsed_value, "state")->valuestring);
-    printf("Adding name to state\n");
     cJSON_AddStringToObject(new_profile, "scholarity", cJSON_GetObjectItem(parsed_value, "scholarity")->valuestring);
-    printf("Adding name to scholarity\n");
     cJSON_AddStringToObject(new_profile, "graduationYear", cJSON_GetObjectItem(parsed_value, "graduationYear")->valuestring);
-    printf("Adding name to graduationYear\n");
     cJSON_AddStringToObject(new_profile, "skills", cJSON_GetObjectItem(parsed_value, "skills")->valuestring);
-    printf("Adding name to skills\n");
 
-    printf("Adding new profile to database\n");
     cJSON* profiles_array = cJSON_GetObjectItemCaseSensitive(database, "profiles");
     cJSON_AddItemToArray(profiles_array, new_profile);
     printf("Added new profile to database\n");
 
     int err = write_database(database);
-    printf("Wrote file\n");
 
     char* json_response = NULL;
     if (err != 0) {
@@ -283,12 +263,10 @@ char* create_profile(cJSON* request, cJSON* database) {
         json_response = format_response(200, "Profile created");
     }
 
-    printf("Deleting new profile struct\n");
     cJSON_Delete(new_profile);
     cJSON_Delete(request_value);
     cJSON_Delete(parsed_value);
 
-    printf("Returning response\n");
     return json_response;
 }
 
@@ -305,7 +283,6 @@ char * search(cJSON * request, cJSON * database) {
         return format_response(200, cJSON_PrintUnformatted(profiles_array));
 
     } else {
-        printf("vai comparar no banco\n");
         return compare_database(field, operation, value, profiles_array);
 
     }
@@ -363,27 +340,21 @@ char * delete_profile(cJSON * request, cJSON * database) {
     printf("delete_profile() called\n");
 
     cJSON* email = cJSON_GetObjectItemCaseSensitive(request, "value");
-    printf("email: %s\n", email->valuestring);
     if (!cJSON_IsString(email)) {
         return create_error_response(400, "Invalid request");
     }
 
     // Search for the profile with the matching email in the profiles array of the database cJSON object
-    printf("Get profiles\n");
     cJSON* profiles = cJSON_GetObjectItemCaseSensitive(database, "profiles");
     if (!cJSON_IsArray(profiles)) {
         return create_error_response(400, "Invalid database format: profiles field is missing or not an array");
     }
     cJSON* profile = NULL;
-    printf("Search in array\n");
     int index = 0;
     cJSON_ArrayForEach(profile, profiles) {
-        printf("inside loop\n");
         cJSON* emailField = cJSON_GetObjectItemCaseSensitive(profile, "email");
-        printf("emailField: %s, email: %s, index: %d\n", emailField->valuestring, email->valuestring, index);
         if (cJSON_IsString(emailField) && (strcmp(email->valuestring, emailField->valuestring) == 0)) {
             // Found the profile with the matching email, remove it from the profiles array
-            printf("Found profile\n");
             cJSON_DeleteItemFromArray(profiles, index);
             write_database(database);
             return format_response(200,"Profile deleted");
@@ -410,7 +381,6 @@ char * answer_request(char * request) {
 
     switch (command_int) {
         case CREATE_PROFILE:
-            printf("Creating profile \n");
             json_response = create_profile(json_request, database);
             break;
 
