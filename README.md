@@ -11,6 +11,8 @@ and then run the server and the client in two consoles (both running at the same
 sh server.sh
 ```
 ```BASH
-sh client.sh
+sh client.sh [SERVER_HOST_IP]
 ```
+OBS: the `SERVER_HOST_IP` paramemter is optional, if ignored the client will assume the server host is in the localhost IP.
+
 If your computer does not support BASH scripts please just open the `.sh` files in the root of this project and copy paste the code in your terminal with the needed changes.
