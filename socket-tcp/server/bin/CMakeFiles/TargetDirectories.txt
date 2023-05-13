@@ -1,0 +1,4 @@
+/home/pedrodearaujo/Documentos/Unicamp/MC833/MC833-Hands-On-Network/server/bin/CMakeFiles/cJSON.dir
+/home/pedrodearaujo/Documentos/Unicamp/MC833/MC833-Hands-On-Network/server/bin/CMakeFiles/server.dir
+/home/pedrodearaujo/Documentos/Unicamp/MC833/MC833-Hands-On-Network/server/bin/CMakeFiles/edit_cache.dir
+/home/pedrodearaujo/Documentos/Unicamp/MC833/MC833-Hands-On-Network/server/bin/CMakeFiles/rebuild_cache.dir

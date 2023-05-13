@@ -1,0 +1,6 @@
+{
+    "command": SEARCH_BATCH,
+    "field": "Age",
+    "operation": ">", 
+    "value": "2000"
+}

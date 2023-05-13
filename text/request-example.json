@@ -1,7 +1,0 @@
-{
-    "command": 2,
-    "field": "Age",
-    "operation": ">", 
-    "value": "2000"
-}
-
