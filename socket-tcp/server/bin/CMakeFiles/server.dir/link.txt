@@ -1,1 +1,0 @@
-/usr/bin/cc  -g -Og CMakeFiles/server.dir/src/server.c.o CMakeFiles/server.dir/src/server-socket.c.o -o build/server  libcJSON.a 

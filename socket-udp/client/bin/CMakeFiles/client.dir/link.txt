@@ -1,1 +1,0 @@
-/usr/bin/cc  -g -Og CMakeFiles/client.dir/src/client.c.o CMakeFiles/client.dir/src/client-socket.c.o -o build/client  libcJSON.a 
