@@ -20,8 +20,7 @@
 #include <cJSON.h>
 
 #define PORT "3490"  // the port users will be connecting to
-# define IP "127.0.0.1" // the hardcoded IP for debugging purposes, will be deleted soon
-#define BACKLOG 10   // how many pending connections queue will hold
+#define IP "127.0.0.1" // the hardcoded IP for debugging purposes, will be deleted soon
 #define MAXDATASIZE 1024 // max number of bytes we can get at once
 
 #define CREATE_PROFILE 1
