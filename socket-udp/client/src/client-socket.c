@@ -5,28 +5,21 @@
 #include "client-socket.h"
 
 int initialize_socket(int * sockfd, struct addrinfo * hints, struct addrinfo * servinfo, struct addrinfo * p, int * rv, char * s) {
+    
     memset(hints, 0, sizeof *hints);
-    hints->ai_family = AF_UNSPEC;
-    hints->ai_socktype = SOCK_STREAM;
+    hints->ai_family = AF_INET;
+    hints->ai_socktype = SOCK_DGRAM;
 
-
-    printf("client geting addrinfo\n");
     if ((*rv = getaddrinfo(IP, PORT, hints, &servinfo)) != 0) {
         fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(*rv));
         return 1;
     }
+
     // loop through all the results and connect to the first we can
     for(p = servinfo; p != NULL; p = p->ai_next) {
 
-        printf("client testing socket\n");
         if ((*sockfd = socket(p->ai_family, p->ai_socktype, p->ai_protocol)) == -1) {
             perror("client: socket");
-            continue;
-        }
-
-        if (connect(*sockfd, p->ai_addr, p->ai_addrlen) == -1) {
-            close(*sockfd);
-            perror("client: connect");
             continue;
         }
 
@@ -34,13 +27,11 @@ int initialize_socket(int * sockfd, struct addrinfo * hints, struct addrinfo * s
     }
 
     if (p == NULL) {
-        fprintf(stderr, "client: failed to connect\n");
+        fprintf(stderr, "client: failed to create socket\n");
         return 2;
     }
 
     inet_ntop(p->ai_family, get_in_addr((struct sockaddr *)p->ai_addr), s, sizeof s);
-    printf("client: connecting to %s\n", s);
-    freeaddrinfo(servinfo); // all done with this structure
 
     return 0;
 }
@@ -59,20 +50,60 @@ int use_socket(char * request, char response[MAXDATASIZE]) {
     int sockfd, bytes_received;  
     char buf[MAXDATASIZE];
     struct addrinfo hints = {0}, *servinfo = NULL, *p = NULL;
-    int rv;
-    char s[INET6_ADDRSTRLEN];
+
+	/*struct designed to handle IPv4 and IPv6 structures*/
+	struct sockaddr_storage their_addr; // connector's address information
+
+	socklen_t addr_len; // connectors expected address size
+	char s[INET6_ADDRSTRLEN];// array with a IPv6 address size
+	int rv=0;
+	int numbytes;
+
     printf("client initializing\n");
-    int err = initialize_socket(&sockfd, &hints, servinfo, p, &rv, s);
-    if (err > 0) {
-        return err;
+    memset(&hints, 0, sizeof hints);
+    hints.ai_family = AF_INET;
+    hints.ai_socktype = SOCK_DGRAM;
+
+
+    /*rv is just to cach possible errors of the function*/
+	rv = getaddrinfo(NULL /*host name like www.example.com or IP*/, 
+					 PORT /*service type like HTTP or PORT number*/, 
+					 &hints /*filter to possible answers*/, 
+					 &servinfo /*the actual answer of the function with a pointer to a linked-list of result*/);
+	if (rv != 0) {
+		/*gai_strerror returns a string explaining the error value returned by
+		the getaddrinfo funtion*/
+		fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rv));
+		return 1;
+	}
+
+    // loop through all the results and connect to the first we can
+    for(p = servinfo; p != NULL; p = p->ai_next) {
+
+        if ((sockfd = socket(p->ai_family, p->ai_socktype, p->ai_protocol)) == -1) {
+            perror("client: socket");
+            continue;
+        }
+
+        break;
     }
-    printf("client sending\n");
-    printf("request: %s\n\n", request);
-    if (send(sockfd, request, strlen(request), 0) == -1)
-        perror("send");
+
+    if (p == NULL) {
+        fprintf(stderr, "client: failed to create socket\n");
+        return 2;
+    }
+
+    freeaddrinfo(servinfo); // all done with this structure
+
+    printf("request: %s\n", request);
+    if (numbytes = sendto(sockfd, request, strlen(request), 0, p->ai_addr, p->ai_addrlen) == -1) {
+        perror("sendto");
+        exit(1);
+    }
 
     printf("client receiving\n");
-    bytes_received = recv(sockfd, response, MAXDATASIZE - 1, 0);
+    addr_len = sizeof their_addr;
+    bytes_received = recvfrom(sockfd, response, MAXDATASIZE - 1, 0, &their_addr, &addr_len);
     if (bytes_received == -1) {
         perror("recv");
         exit(1);

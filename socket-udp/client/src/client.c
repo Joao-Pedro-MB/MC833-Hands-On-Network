@@ -215,5 +215,6 @@ int main () {
         printf("Error: %d\n", err);
         exit(1);
     }
+    
     parse_response(response);
 }
