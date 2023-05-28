@@ -10,6 +10,8 @@
 • remover um perfil a partir de seu identificador (email);
 */
 
+#define BUFFER_SIZE 100000
+
 void parse_string(char* input, char* field, char* operation, char* value) {
     // Find the first space character in the input string
     char * space_pos = strchr(input, ' ');
@@ -41,10 +43,12 @@ char * format_message(int command, char * field, char * comparison_method, char 
     char string_command[2];
     sprintf(string_command, "%d", command);
     cJSON *root = cJSON_CreateObject();
+
     cJSON_AddStringToObject(root, "command", string_command);
     cJSON_AddStringToObject(root, "field", field);
     cJSON_AddStringToObject(root, "operation", comparison_method);
     cJSON_AddStringToObject(root, "value", value);
+
     char * answer = cJSON_PrintUnformatted(root);
     cJSON_Delete(root);
 
@@ -59,6 +63,32 @@ char * format_message(int command, char * field, char * comparison_method, char 
     }
 
     return answer;
+}
+
+size_t get_image(char * image_name, char * buffer) {
+    FILE * file = fopen(image_name, "rb");
+    if (file == NULL) {
+        printf("Error opening file\n");
+        exit(1);
+    }
+    fseek(file, 0, SEEK_END);
+    size_t file_size = ftell(file);
+    rewind(file);
+    fread(buffer, 1, file_size, file);
+    fclose(file);
+    return file_size;
+}
+
+void write_image(char * buffer, size_t size) {
+
+    FILE * file  = fopen("./client/image/destination.jpg", "wb");
+    if (file == NULL) {
+        perror("Error opening destination file");
+        exit(1);
+    }
+
+    fwrite(buffer, 1, size, file);
+    fclose(file);
 }
 
 void parse_response(char * response) {
@@ -156,16 +186,34 @@ char * find_profile() {
     return format_message(FIND_PROFILE, NULL, NULL, client_input);
 }
 
+char * add_picture() {
+    char image[BUFFER_SIZE];
+    char * client_input;
+    client_input = (char*) malloc(100*sizeof(char));
+    printf( "Type the image name and extension (ex: image.png):\n");
+    scanf("%s",client_input);
+    printf("aqui embaixo deveria aparecer o input do usuario:\n");
+    printf("%s\n", client_input);
+
+
+    //size_t bytesRead = get_image("./client/image/silver-gull.jpg", image);
+    printf("aqui significa que conseguiu ler\n");
+    //write_image(image, bytesRead);
+    printf("aqui significa q conseguiu escrever:\n");
+    //image[bytesRead] = '\0';
+    return format_message(ADD_PICTURE, NULL, NULL, client_input);
+}
+
 char * delete_profile() {
     char* client_input;
     client_input = (char*) malloc(100*sizeof(char));
     printf( "Type the user's email:\n");
-    scanf ("%s",client_input);
+    scanf("%s",client_input);
 
     return format_message(DELETE_PROFILE, NULL, NULL, client_input);
 }
 
-int main () {
+int main() {
     int client_input_int;
     char trash[2];
     
@@ -175,8 +223,9 @@ int main () {
      2 - listar perfis com base em um critério (>, <, ==, >=, <=, !=);\n\
      3 - listar todas as informações de todos os perfis;\n\
      4 - dado o email de um perfil, retornar suas informações;\n\
-     5 - remover um perfil;\n");
-    scanf ("%d",&client_input_int);
+     5 - enviar uma foto ao servidor;\n\
+     6 - remover um perfil;\n");
+    scanf("%d",&client_input_int);
     trash[0] = getchar();
 
    char * request;
@@ -200,6 +249,9 @@ int main () {
             break;
 
         case 5:
+            request = add_picture();
+            break;
+        case 6:
             request = delete_profile();
             break;
 
@@ -208,7 +260,9 @@ int main () {
             exit(1);
     };
 
-    int err = use_socket(request, response);
+    printf("Request: %s\n", request);
+
+    int err = use_socket(request, client_input_int == 5, response);
     free(request);
 
     if (err != 0) {
@@ -216,5 +270,5 @@ int main () {
         exit(1);
     }
     
-    parse_response(response);
+    //parse_response(response);
 }
