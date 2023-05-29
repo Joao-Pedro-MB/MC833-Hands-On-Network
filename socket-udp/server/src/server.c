@@ -367,13 +367,25 @@ char * delete_profile(cJSON * request, cJSON * database) {
 
 }
 
-void send_response(char * response) {
-    printf("send_response() called\n");
-    use_socket(response, 0);
-    printf("Response sent\n");
+char * get_image(cJSON * request, cJSON * database) {
+    printf("get_image() called\n");
+
+    cJSON * image_name = cJSON_GetObjectItem(request, "value");
+
+    if (image_name == NULL) {
+        return create_error_response(400, "Invalid request");
+    }
+
+    char image_path[18] = "./server/image/";
+
+    char * image_path_name = malloc(strlen(image_path) + strlen(image_name->valuestring) + 1);
+    strcpy(image_path_name, image_path);
+    strcat(image_path_name, image_name->valuestring);
+
+    return image_path_name;    
 }
 
-char * answer_request(struct Packet packets[], int num_packets) {
+int answer_request(struct Packet packets[], int num_packets, char * json_response) {
     cJSON *database = access_database();
     char *request;
 
@@ -384,7 +396,7 @@ char * answer_request(struct Packet packets[], int num_packets) {
         request = packets[0].data;
     }
     printf("request: %s\n", request);
-    char request_copy[200] = "{\"Co";
+    char request_copy[200] = "{\"co";
     strcat(request_copy, request);
     printf("request_copy: %s\n", request_copy);
     cJSON * json_request = cJSON_Parse(request_copy);
@@ -392,6 +404,7 @@ char * answer_request(struct Packet packets[], int num_packets) {
     int command_int = atoi(command->valuestring);
 
     char * json_response;
+    int is_image = 0;
 
     switch (command_int) {
         case CREATE_PROFILE:
@@ -410,6 +423,11 @@ char * answer_request(struct Packet packets[], int num_packets) {
             json_response = search_profile(json_request, database);
             break;
 
+        case GET_IMAGE:
+            json_response = get_image(json_request, database);
+            is_image = 1;
+            break;
+
         case DELETE_PROFILE:
             json_response = delete_profile(json_request, database);
             break;
@@ -421,7 +439,7 @@ char * answer_request(struct Packet packets[], int num_packets) {
 
     printf("json_response: %s\n", json_response);
     printf("arrived in send response\n");
-    return json_response;
+    return is_image;
 }
 
 int main() {

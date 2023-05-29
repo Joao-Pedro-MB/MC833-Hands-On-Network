@@ -28,7 +28,7 @@
 #define SEARCH_BATCH 2
 #define LIST_ALL 3
 #define FIND_PROFILE 4
-#define ADD_IMAGE 5
+#define GET_IMAGE 5
 #define DELETE_PROFILE 6
 
 #define GREATER 62
@@ -53,7 +53,6 @@ struct Packet{
 void sigchld_handler(int s);
 void *get_in_addr(struct sockaddr *sa);
 int start_server(void);
-char * answer_request(struct Packet packets[100], int num_packets);
-int use_socket(char * request, int is_image);
+int answer_request(struct Packet packets[100], int num_packets, char * json_response);
 
 #endif // SERVER_SOCKET_H_

@@ -4,6 +4,7 @@
 
 #include "server-socket.h"
 
+
 // get sockaddr, IPv4 or IPv6:
 void *get_in_addr(struct sockaddr *sa)
 {
@@ -29,7 +30,7 @@ int start_server(void)
     hints.ai_socktype = SOCK_DGRAM;
     hints.ai_flags = AI_PASSIVE; // use my IP
 
-    if ((rv = getaddrinfo(SERVER_IP, SERVER_PORT, &hints, &servinfo)) != 0) {
+    if ((rv = getaddrinfo(NULL, SERVER_PORT, &hints, &servinfo)) != 0) {
         fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rv));
         return 1;
     }
@@ -61,45 +62,75 @@ int start_server(void)
     printf("listener: waiting to recvfrom...\n");
 
     addr_len = sizeof their_addr;
-	struct Packet packets[MAX_PACKET_NUMBER];
 
-	// receive packet
-	int packetNumber = 0;
-	while (packetNumber < MAX_PACKET_NUMBER) {
 
-		printf("listener: packet number %d\n", packetNumber);
 
-    	if ((numbytes = recvfrom(sockfd, &packets[packetNumber], sizeof(struct Packet) , 0,
-        	(struct sockaddr *)&their_addr, &addr_len)) == -1) {
-        	perror("recvfrom");
-        	exit(1);
-    	}
 
-		packetNumber++;
+    // receives request from client
 
-		printf("listener: packet number %d and totalpackets: %d\n", packetNumber, packets[packetNumber-1].totalPackets);
+    struct Packet packets[MAX_PACKET_NUMBER];
+    int n_packets = 0;
 
-    	printf("listener: got packet from %s:%d\n",
-        	inet_ntop(their_addr.ss_family,get_in_addr((struct sockaddr *)&their_addr),s, sizeof s),
-            ntohs(((struct sockaddr_in *)&their_addr)->sin_port));
+    while (n_packets < MAX_PACKET_NUMBER) {
+        if ((numbytes = recvfrom(sockfd, &packets[n_packets], sizeof(struct Packet) , 0,
+            (struct sockaddr *)&their_addr, &addr_len)) == -1) {
+            perror("recvfrom");
+            exit(1);
+        }
+        n_packets++;
 
-    	printf("listener: packet is %d bytes long\n", numbytes);
-    	printf("listener: packet contains \"%ld\"\n", strlen(packets[packetNumber-1].data));
+        printf("listener: got packet from %s\n",
+            inet_ntop(their_addr.ss_family,
+                get_in_addr((struct sockaddr *)&their_addr),
+                s, sizeof s));
+        printf("listener: packet is %d bytes long\n", numbytes);
+        packets[n_packets-1].data[packets[n_packets-1].dataSize] = '\0';
+        printf("listener: packet contains \"%s\"\n", packets[n_packets-1].data);
 
-		if (packetNumber >= packets[packetNumber-1].totalPackets) {
-			break;
-		}
-	}
+        if (n_packets >= packets[n_packets-1].totalPackets) {
+            printf("listener: all packets received\n");
+            break;
+        }
+    }
 
-    char * response = answer_request(packets, packetNumber);
 
-    if ((numbytes = sendto(sockfd, response, strlen(response), 0,
-             (struct sockaddr *)&their_addr, addr_len)) == -1) {
-        perror("talker: sendto");
-        exit(1);
+
+
+    // sends response to client
+
+    char * response;
+    int is_image = answer_request(packets, n_packets, response);
+    printf("listener: response is \"%s\"\n", response);
+
+    int totalPackets = (strlen(response) / MAX_DGRAM_SIZE) + 1;
+
+    if (is_image == 0) {
+        for (int n_packets = 0; n_packets < totalPackets; n_packets++){
+            struct Packet *packet;
+            packet = (struct Packet *)malloc(sizeof(struct Packet));
+            packet->totalPackets = totalPackets;
+            packet->packetNumber = n_packets;
+            packet->dataSize = MAX_DGRAM_SIZE;
+            if (n_packets == totalPackets - 1) {
+                packet->dataSize = strlen(response) - (n_packets * MAX_DGRAM_SIZE);
+            }
+            memcpy(packet->data, response + (n_packets * MAX_DGRAM_SIZE), packet->dataSize);
+
+            if ((numbytes = sendto(sockfd, packet, sizeof(struct Packet), 0,
+                     (struct sockaddr *)&their_addr, addr_len)) == -1) {
+                perror("talker: sendto");
+                exit(1);
+            }
+
+            printf("talker: sent %d bytes of %d containing %s\n", numbytes, packet->dataSize, packet->data);
+            free(packet);
+        }
+    } else {
+        // passsar a logica do image talker que ta num arquivo do cliente para esse lado aqui
     }
 
     close(sockfd);
 
     return 0;
 }
+

@@ -7,12 +7,12 @@
 #define MAX_DGRAM_SIZE 4096
 
 int use_socket(char * request, int is_image)
-{   
-    printf("Dentro do use socket\n");
+{
     int sockfd;
     struct addrinfo hints, *servinfo, *p;
     int rv;
     int numbytes;
+
 
     memset(&hints, 0, sizeof hints);
     hints.ai_family = AF_INET6; // set to AF_INET to use IPv4
@@ -39,55 +39,54 @@ int use_socket(char * request, int is_image)
         return 2;
     }
 
-    printf("talker: sending request\n");
-    printf("talker: request: %s\n", request);
 
-    // wrap packet
-    int sizeofMessage = strlen(request);
-    int totalPackets = sizeofMessage / MAX_DGRAM_SIZE + 1;
+    // sends request to server
 
-    for (int packetNumber = 0 ; packetNumber < totalPackets; packetNumber++) {
-        struct Packet packet;
-        packet.packetNumber = packetNumber;
-        packet.totalPackets = totalPackets;
-        packet.dataSize = MAX_DGRAM_SIZE;
-        if (packetNumber == totalPackets - 1) {
-            packet.dataSize = sizeofMessage % MAX_DGRAM_SIZE;
-        }
-        memcpy(packet.data, request + packetNumber * MAX_DGRAM_SIZE, packet.dataSize);
-        
-        printf("\n\n\n\ntalker: packetNumber: %d\n", packetNumber);
-        printf("talker: totalPackets: %d\n", totalPackets);
-        printf("talker: dataSize: %d\n", packet.dataSize);
-        printf("talker: message size: %d\n", sizeofMessage);
-        printf("talker: MAX_DGRAM_SIZE: %d\n", MAX_DGRAM_SIZE);
-        printf("talker: data: %s\n\n\n\n\n", packet.data);
+    int totalPackets = (strlen(request) / MAX_DGRAM_SIZE) + 1;
+    for (int n_packets = 0; n_packets < totalPackets; n_packets++){
+        struct Packet *packet;
+        packet = (struct Packet *)malloc(sizeof(struct Packet));
+        packet->totalPackets = 1;
+        packet->packetNumber = 0;
+        packet->dataSize = strlen(request);
+        memcpy(packet->data, request, packet->dataSize);
 
-
-        if ((numbytes = sendto(sockfd, &packet, sizeof(struct Packet), 0,
-                 p->ai_addr, p->ai_addrlen)) == -1) {
+        if ((numbytes = sendto(sockfd, packet, sizeof(struct Packet), 0,
+            p->ai_addr, p->ai_addrlen)) == -1) {
             perror("talker: sendto");
             exit(1);
         }
+
+        free(packet);
     }
 
-    freeaddrinfo(servinfo);
 
-    printf("talker: sent %d bytes to %s\n", numbytes, SERVER_IP);
+
+    // receives response from server
+
     struct Packet packets[MAX_PACKET_NUMBER];
-    int packetNumber = 0;
-    while(packetNumber < MAX_PACKET_NUMBER){
-        if ((numbytes = recvfrom(sockfd, &packets[packetNumber], sizeof(struct Packet), 0,
-        p->ai_addr, p->ai_addrlen)) == -1) {
-            perror("talker: recvfrom");
+    int n_packets = 0;
+    while(n_packets < MAX_PACKET_NUMBER) {
+
+        if ((numbytes = recvfrom(sockfd, &packets[n_packets], sizeof(struct Packet) , 0,
+            p->ai_addr, &p->ai_addrlen)) == -1) {
+            perror("recvfrom");
             exit(1);
         }
-        packetNumber++;
-        printf("talker: packet number %d\n", packetNumber);
-        if (packetNumber >= packets[packetNumber-1].totalPackets) {
+
+        n_packets++;
+
+        if (n_packets >= packets[n_packets-1].totalPackets) {
+            printf("talker: all packets received\n");
             break;
         }
     }
+
+    receive_answer(packets, n_packets, is_image);
+
+    freeaddrinfo(servinfo);
+
+    printf("talker: sent %d bytes of %d containing %s\n", numbytes, packet->dataSize, packet->data);
 
     close(sockfd);
 
