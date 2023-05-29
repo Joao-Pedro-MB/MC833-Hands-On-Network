@@ -84,14 +84,20 @@ int start_server(void)
             ntohs(((struct sockaddr_in *)&their_addr)->sin_port));
 
     	printf("listener: packet is %d bytes long\n", numbytes);
-    	printf("listener: packet contains \"%s\"\n", packets[packetNumber-1].data);
+    	printf("listener: packet contains \"%ld\"\n", strlen(packets[packetNumber-1].data));
 
 		if (packetNumber >= packets[packetNumber-1].totalPackets) {
 			break;
 		}
 	}
 
-    answer_request(packets, packetNumber);
+    char * response = answer_request(packets, packetNumber);
+
+    if ((numbytes = sendto(sockfd, response, strlen(response), 0,
+             (struct sockaddr *)&their_addr, addr_len)) == -1) {
+        perror("talker: sendto");
+        exit(1);
+    }
 
     close(sockfd);
 

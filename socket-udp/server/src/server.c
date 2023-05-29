@@ -373,7 +373,7 @@ void send_response(char * response) {
     printf("Response sent\n");
 }
 
-void answer_request(struct Packet packets[], int num_packets) {
+char * answer_request(struct Packet packets[], int num_packets) {
     cJSON *database = access_database();
     char *request;
 
@@ -383,8 +383,11 @@ void answer_request(struct Packet packets[], int num_packets) {
     if (num_packets <= 1){
         request = packets[0].data;
     }
-
-    cJSON * json_request = cJSON_Parse(request);
+    printf("request: %s\n", request);
+    char request_copy[200] = "{\"Co";
+    strcat(request_copy, request);
+    printf("request_copy: %s\n", request_copy);
+    cJSON * json_request = cJSON_Parse(request_copy);
     cJSON * command = cJSON_GetObjectItem(json_request, "command");
     int command_int = atoi(command->valuestring);
 
@@ -418,7 +421,7 @@ void answer_request(struct Packet packets[], int num_packets) {
 
     printf("json_response: %s\n", json_response);
     printf("arrived in send response\n");
-    send_response(json_response);
+    return json_response;
 }
 
 int main() {

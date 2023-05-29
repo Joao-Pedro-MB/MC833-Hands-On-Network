@@ -74,6 +74,21 @@ int use_socket(char * request, int is_image)
     freeaddrinfo(servinfo);
 
     printf("talker: sent %d bytes to %s\n", numbytes, SERVER_IP);
+    struct Packet packets[MAX_PACKET_NUMBER];
+    int packetNumber = 0;
+    while(packetNumber < MAX_PACKET_NUMBER){
+        if ((numbytes = recvfrom(sockfd, &packets[packetNumber], sizeof(struct Packet), 0,
+        p->ai_addr, p->ai_addrlen)) == -1) {
+            perror("talker: recvfrom");
+            exit(1);
+        }
+        packetNumber++;
+        printf("talker: packet number %d\n", packetNumber);
+        if (packetNumber >= packets[packetNumber-1].totalPackets) {
+            break;
+        }
+    }
+
     close(sockfd);
 
     return 0;

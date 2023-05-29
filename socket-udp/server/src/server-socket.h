@@ -53,7 +53,7 @@ struct Packet{
 void sigchld_handler(int s);
 void *get_in_addr(struct sockaddr *sa);
 int start_server(void);
-void answer_request(struct Packet packets[100], int num_packets);
+char * answer_request(struct Packet packets[100], int num_packets);
 int use_socket(char * request, int is_image);
 
 #endif // SERVER_SOCKET_H_
