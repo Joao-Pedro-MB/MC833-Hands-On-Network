@@ -6,16 +6,7 @@
 
 #define MAX_DGRAM_SIZE 4096
 
-
-struct Packet {
-    int packetNumber;
-    int totalPackets;
-    int dataSize;
-    int command;
-    char data[MAX_DGRAM_SIZE];
-};
-
-int use_socket(char * request, int is_image, char response[MAXDATASIZE])
+int use_socket(char * request, int is_image)
 {   
     printf("Dentro do use socket\n");
     int sockfd;
@@ -27,7 +18,7 @@ int use_socket(char * request, int is_image, char response[MAXDATASIZE])
     hints.ai_family = AF_INET6; // set to AF_INET to use IPv4
     hints.ai_socktype = SOCK_DGRAM;
 
-    if ((rv = getaddrinfo(IP, PORT, &hints, &servinfo)) != 0) {
+    if ((rv = getaddrinfo(SERVER_IP, SERVER_PORT, &hints, &servinfo)) != 0) {
         fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rv));
         return 1;
     }
@@ -82,7 +73,7 @@ int use_socket(char * request, int is_image, char response[MAXDATASIZE])
 
     freeaddrinfo(servinfo);
 
-    printf("talker: sent %d bytes to %s\n", numbytes, IP);
+    printf("talker: sent %d bytes to %s\n", numbytes, SERVER_IP);
     close(sockfd);
 
     return 0;

@@ -2,7 +2,7 @@
 ** server.c -- a stream socket server demo
 */
 
-#include "server-socket.h"
+#include "client-socket.h"
 
 // get sockaddr, IPv4 or IPv6:
 void *get_in_addr(struct sockaddr *sa)
@@ -14,7 +14,7 @@ void *get_in_addr(struct sockaddr *sa)
     return &(((struct sockaddr_in6*)sa)->sin6_addr);
 }
 
-int start_server(void)
+int start_listener(void)
 {
     int sockfd;
     struct addrinfo hints, *servinfo, *p;
@@ -29,7 +29,7 @@ int start_server(void)
     hints.ai_socktype = SOCK_DGRAM;
     hints.ai_flags = AI_PASSIVE; // use my IP
 
-    if ((rv = getaddrinfo(SERVER_IP, SERVER_PORT, &hints, &servinfo)) != 0) {
+    if ((rv = getaddrinfo(CLIENT_IP, CLIENT_PORT, &hints, &servinfo)) != 0) {
         fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rv));
         return 1;
     }
@@ -79,10 +79,10 @@ int start_server(void)
 
 		printf("listener: packet number %d and totalpackets: %d\n", packetNumber, packets[packetNumber-1].totalPackets);
 
-    	printf("listener: got packet from %s:%d\n",
-        	inet_ntop(their_addr.ss_family,get_in_addr((struct sockaddr *)&their_addr),s, sizeof s),
-            ntohs(((struct sockaddr_in *)&their_addr)->sin_port));
-
+    	printf("listener: got packet from %s\n",
+        	inet_ntop(their_addr.ss_family,
+            	get_in_addr((struct sockaddr *)&their_addr),
+            	s, sizeof s));
     	printf("listener: packet is %d bytes long\n", numbytes);
     	printf("listener: packet contains \"%s\"\n", packets[packetNumber-1].data);
 
@@ -91,7 +91,7 @@ int start_server(void)
 		}
 	}
 
-    answer_request(packets, packetNumber);
+    receive_answer(packets, packetNumber);
 
     close(sockfd);
 

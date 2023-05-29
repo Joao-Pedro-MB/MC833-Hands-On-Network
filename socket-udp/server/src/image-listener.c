@@ -60,39 +60,23 @@ int start_server(void)
 
     printf("listener: waiting to recvfrom...\n");
 
-    addr_len = sizeof their_addr;
-	struct Packet packets[MAX_PACKET_NUMBER];
+    addr_len = sizeof(their_addr);
+char buffer[MAX_DGRAM_SIZE];
+    FILE *file = fopen("./server/image/received.jpg", "wb");
+    if (file == NULL) {
+        perror("Failed to open file");
+    }
 
-	// receive packet
-	int packetNumber = 0;
-	while (packetNumber < MAX_PACKET_NUMBER) {
-
-		printf("listener: packet number %d\n", packetNumber);
-
-    	if ((numbytes = recvfrom(sockfd, &packets[packetNumber], sizeof(struct Packet) , 0,
-        	(struct sockaddr *)&their_addr, &addr_len)) == -1) {
-        	perror("recvfrom");
-        	exit(1);
-    	}
-
-		packetNumber++;
-
-		printf("listener: packet number %d and totalpackets: %d\n", packetNumber, packets[packetNumber-1].totalPackets);
-
-    	printf("listener: got packet from %s:%d\n",
-        	inet_ntop(their_addr.ss_family,get_in_addr((struct sockaddr *)&their_addr),s, sizeof s),
-            ntohs(((struct sockaddr_in *)&their_addr)->sin_port));
-
-    	printf("listener: packet is %d bytes long\n", numbytes);
-    	printf("listener: packet contains \"%s\"\n", packets[packetNumber-1].data);
-
-		if (packetNumber >= packets[packetNumber-1].totalPackets) {
-			break;
-		}
-	}
-
-    answer_request(packets, packetNumber);
-
+    size_t num_bytes_received, total_bytes_received = 0;
+    while ((num_bytes_received = recvfrom(sockfd, buffer, MAX_DGRAM_SIZE, 0, (struct sockaddr *)&their_addr, &addr_len)) > 0) {
+        size_t num_bytes_written = fwrite(buffer, sizeof(char), num_bytes_received, file);
+        if (num_bytes_written < num_bytes_received) {
+            perror("Failed to write data to file");
+        }
+        total_bytes_received += num_bytes_received;
+        printf("Received %ld bytes\n", total_bytes_received);
+    }
+    fclose(file);
     close(sockfd);
 
     return 0;

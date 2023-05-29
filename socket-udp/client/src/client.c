@@ -105,6 +105,18 @@ void parse_response(char * response) {
     } 
 }
 
+void receive_answer(struct Packet packets[], int num_packets) {
+    if (num_packets == 0) {
+        printf("No packets received\n");
+        return;
+    } else if (num_packets == 1) {
+        parse_response(packets[0].data);
+        return;
+    } else {
+        //it is a image
+    }
+}
+
 char * create_new_user() {
     char email[100], name[100], age[100], city[100], state[100], scholarity[100], graduationYear[10], skills[1000];
     printf( "Type new user's email:\n");
@@ -229,7 +241,6 @@ int main() {
     trash[0] = getchar();
 
    char * request;
-   char response[MAXDATASIZE];
 
     switch (client_input_int) {
         case 1:
@@ -262,13 +273,17 @@ int main() {
 
     printf("Request: %s\n", request);
 
-    int err = use_socket(request, client_input_int == 5, response);
+    int err = use_socket(request, client_input_int == 5);
     free(request);
 
     if (err != 0) {
         printf("Error: %d\n", err);
         exit(1);
     }
-    
-    //parse_response(response);
+
+    err = start_listener();
+    if (err != 0) {
+        printf("Error in listener: %d\n", err);
+        exit(1);
+    }
 }

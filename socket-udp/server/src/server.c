@@ -367,11 +367,22 @@ char * delete_profile(cJSON * request, cJSON * database) {
 
 }
 
-char * answer_request(char * request) {
+void send_response(char * response) {
+    printf("send_response() called\n");
+    use_socket(response, 0);
+    printf("Response sent\n");
+}
+
+void answer_request(struct Packet packets[], int num_packets) {
     cJSON *database = access_database();
+    char *request;
 
     printf("answer_request() called\n");
-    printf("request: %s\n", request);
+    printf("numPackets: %d\n", num_packets);
+
+    if (num_packets <= 1){
+        request = packets[0].data;
+    }
 
     cJSON * json_request = cJSON_Parse(request);
     cJSON * command = cJSON_GetObjectItem(json_request, "command");
@@ -406,8 +417,8 @@ char * answer_request(char * request) {
     };
 
     printf("json_response: %s\n", json_response);
-
-    return json_response;
+    printf("arrived in send response\n");
+    send_response(json_response);
 }
 
 int main() {
