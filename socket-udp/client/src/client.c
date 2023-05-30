@@ -281,9 +281,4 @@ int main() {
         exit(1);
     }
 
-    err = start_listener();
-    if (err != 0) {
-        printf("Error in listener: %d\n", err);
-        exit(1);
-    }
 }

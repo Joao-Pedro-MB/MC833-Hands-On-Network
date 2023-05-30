@@ -82,11 +82,11 @@ int use_socket(char * request, int is_image)
         }
     }
 
-    receive_answer(packets, n_packets, is_image);
+    receive_answer(packets, n_packets);
 
     freeaddrinfo(servinfo);
 
-    printf("talker: sent %d bytes of %d containing %s\n", numbytes, packet->dataSize, packet->data);
+    // printf("talker: sent %d bytes of %d containing %s\n", numbytes, packet->dataSize, packet->data);
 
     close(sockfd);
 

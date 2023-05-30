@@ -63,9 +63,6 @@ int start_server(void)
 
     addr_len = sizeof their_addr;
 
-
-
-
     // receives request from client
 
     struct Packet packets[MAX_PACKET_NUMBER];
@@ -99,7 +96,7 @@ int start_server(void)
     // sends response to client
 
     char * response;
-    int is_image = answer_request(packets, n_packets, response);
+    int is_image = answer_request(packets, n_packets, &response);
     printf("listener: response is \"%s\"\n", response);
 
     int totalPackets = (strlen(response) / MAX_DGRAM_SIZE) + 1;
