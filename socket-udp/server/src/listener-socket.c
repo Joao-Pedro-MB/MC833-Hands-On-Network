@@ -63,68 +63,86 @@ int start_server(void)
 
     addr_len = sizeof their_addr;
 
-
-
-
     // receives request from client
 
-    struct Packet packets[MAX_PACKET_NUMBER];
-    int n_packets = 0;
+    addr_len = sizeof their_addr;
 
-    while (n_packets < MAX_PACKET_NUMBER) {
-        if ((numbytes = recvfrom(sockfd, &packets[n_packets], sizeof(struct Packet) , 0,
-            (struct sockaddr *)&their_addr, &addr_len)) == -1) {
-            perror("recvfrom");
-            exit(1);
-        }
-        n_packets++;
+    char request[MAX_DGRAM_SIZE];
 
-        printf("listener: got packet from %s\n",
-            inet_ntop(their_addr.ss_family,
-                get_in_addr((struct sockaddr *)&their_addr),
-                s, sizeof s));
-        printf("listener: packet is %d bytes long\n", numbytes);
-        packets[n_packets-1].data[packets[n_packets-1].dataSize] = '\0';
-        printf("listener: packet contains \"%s\"\n", packets[n_packets-1].data);
+	int bytes_received = recvfrom(sockfd, request, MAX_DGRAM_SIZE - 1 , 0, &their_addr, &addr_len);
+		
+	if (bytes_received == -1) {
+		perror("recvfrom");
+		exit(1);
+	}
 
-        if (n_packets >= packets[n_packets-1].totalPackets) {
-            printf("listener: all packets received\n");
-            break;
-        }
-    }
+	request[bytes_received] = '\0';
+
+    printf("%s\n", request);
+
+    char * response;
+	int is_image = answer_request(request, &response);
+
+    // struct Packet packets[MAX_PACKET_NUMBER];
+    // int n_packets = 0;
+
+    // while (n_packets < MAX_PACKET_NUMBER) {
+    //     if ((numbytes = recvfrom(sockfd, &packets[n_packets], sizeof(struct Packet) , 0,
+    //         (struct sockaddr *)&their_addr, &addr_len)) == -1) {
+    //         perror("recvfrom");
+    //         exit(1);
+    //     }
+    //     n_packets++;
+
+    //     printf("listener: got packet from %s\n",
+    //         inet_ntop(their_addr.ss_family,
+    //             get_in_addr((struct sockaddr *)&their_addr),
+    //             s, sizeof s));
+    //     printf("listener: packet is %d bytes long\n", numbytes);
+    //     packets[n_packets-1].data[packets[n_packets-1].dataSize] = '\0';
+    //     printf("listener: packet contains \"%s\"\n", packets[n_packets-1].data);
+
+    //     if (n_packets >= packets[n_packets-1].totalPackets) {
+    //         printf("listener: all packets received\n");
+    //         break;
+    //     }
+    // }
 
 
 
 
     // sends response to client
 
-    char * response;
-    int is_image = answer_request(packets, n_packets, response);
+    // int is_image = answer_request(packets, n_packets, response);
     printf("listener: response is \"%s\"\n", response);
 
-    int totalPackets = (strlen(response) / MAX_DGRAM_SIZE) + 1;
+    // int totalPackets = (strlen(response) / MAX_DGRAM_SIZE) + 1;
 
     if (is_image == 0) {
-        for (int n_packets = 0; n_packets < totalPackets; n_packets++){
-            struct Packet *packet;
-            packet = (struct Packet *)malloc(sizeof(struct Packet));
-            packet->totalPackets = totalPackets;
-            packet->packetNumber = n_packets;
-            packet->dataSize = MAX_DGRAM_SIZE;
-            if (n_packets == totalPackets - 1) {
-                packet->dataSize = strlen(response) - (n_packets * MAX_DGRAM_SIZE);
-            }
-            memcpy(packet->data, response + (n_packets * MAX_DGRAM_SIZE), packet->dataSize);
-
-            if ((numbytes = sendto(sockfd, packet, sizeof(struct Packet), 0,
-                     (struct sockaddr *)&their_addr, addr_len)) == -1) {
-                perror("talker: sendto");
-                exit(1);
-            }
-
-            printf("talker: sent %d bytes of %d containing %s\n", numbytes, packet->dataSize, packet->data);
-            free(packet);
+        if (numbytes = sendto(sockfd, response, strlen(response), 0, (struct sockaddr *)&their_addr, addr_len) == -1) {
+            perror("sendto");
+            exit(1);
         }
+        // for (int n_packets = 0; n_packets < totalPackets; n_packets++){
+        //     struct Packet *packet;
+        //     packet = (struct Packet *)malloc(sizeof(struct Packet));
+        //     packet->totalPackets = totalPackets;
+        //     packet->packetNumber = n_packets;
+        //     packet->dataSize = MAX_DGRAM_SIZE;
+        //     if (n_packets == totalPackets - 1) {
+        //         packet->dataSize = strlen(response) - (n_packets * MAX_DGRAM_SIZE);
+        //     }
+        //     memcpy(packet->data, response + (n_packets * MAX_DGRAM_SIZE), packet->dataSize);
+
+        //     if ((numbytes = sendto(sockfd, packet, sizeof(struct Packet), 0,
+        //              (struct sockaddr *)&their_addr, addr_len)) == -1) {
+        //         perror("talker: sendto");
+        //         exit(1);
+        //     }
+
+        //     printf("talker: sent %d bytes of %d containing %s\n", numbytes, packet->dataSize, packet->data);
+        //     free(packet);
+        // }
     } else {
         // passsar a logica do image talker que ta num arquivo do cliente para esse lado aqui
     }

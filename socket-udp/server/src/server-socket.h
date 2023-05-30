@@ -53,6 +53,8 @@ struct Packet{
 void sigchld_handler(int s);
 void *get_in_addr(struct sockaddr *sa);
 int start_server(void);
-int answer_request(struct Packet packets[100], int num_packets, char * json_response);
+// int answer_request(struct Packet packets[100], int num_packets, char * json_response);
+int answer_request(char * request, char ** json_response);
+
 
 #endif // SERVER_SOCKET_H_

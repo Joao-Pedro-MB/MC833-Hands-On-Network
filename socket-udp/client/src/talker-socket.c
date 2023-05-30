@@ -13,7 +13,6 @@ int use_socket(char * request, int is_image)
     int rv;
     int numbytes;
 
-
     memset(&hints, 0, sizeof hints);
     hints.ai_family = AF_INET6; // set to AF_INET to use IPv4
     hints.ai_socktype = SOCK_DGRAM;
@@ -39,26 +38,31 @@ int use_socket(char * request, int is_image)
         return 2;
     }
 
+    printf("request: %s\n", request);
+    if (numbytes = sendto(sockfd, request, strlen(request), 0, p->ai_addr, p->ai_addrlen) == -1) {
+        perror("sendto");
+        exit(1);
+    }
 
     // sends request to server
 
-    int totalPackets = (strlen(request) / MAX_DGRAM_SIZE) + 1;
-    for (int n_packets = 0; n_packets < totalPackets; n_packets++){
-        struct Packet *packet;
-        packet = (struct Packet *)malloc(sizeof(struct Packet));
-        packet->totalPackets = 1;
-        packet->packetNumber = 0;
-        packet->dataSize = strlen(request);
-        memcpy(packet->data, request, packet->dataSize);
+    // int totalPackets = (strlen(request) / MAX_DGRAM_SIZE) + 1;
+    // for (int n_packets = 0; n_packets < totalPackets; n_packets++){
+    //     struct Packet *packet;
+    //     packet = (struct Packet *)malloc(sizeof(struct Packet));
+    //     packet->totalPackets = 1;
+    //     packet->packetNumber = 0;
+    //     packet->dataSize = strlen(request);
+    //     memcpy(packet->data, request, packet->dataSize);
 
-        if ((numbytes = sendto(sockfd, packet, sizeof(struct Packet), 0,
-            p->ai_addr, p->ai_addrlen)) == -1) {
-            perror("talker: sendto");
-            exit(1);
-        }
+    //     if ((numbytes = sendto(sockfd, packet, sizeof(struct Packet), 0,
+    //         p->ai_addr, p->ai_addrlen)) == -1) {
+    //         perror("talker: sendto");
+    //         exit(1);
+    //     }
 
-        free(packet);
-    }
+    //     free(packet);
+    // }
 
 
 
@@ -82,11 +86,11 @@ int use_socket(char * request, int is_image)
         }
     }
 
-    receive_answer(packets, n_packets, is_image);
+    receive_answer(packets, n_packets);
 
     freeaddrinfo(servinfo);
 
-    printf("talker: sent %d bytes of %d containing %s\n", numbytes, packet->dataSize, packet->data);
+    // printf("talker: sent %d bytes of %d containing %s\n", numbytes, packet->dataSize, packet->data);
 
     close(sockfd);
 

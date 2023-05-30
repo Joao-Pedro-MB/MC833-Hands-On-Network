@@ -271,8 +271,6 @@ int main() {
             exit(1);
     };
 
-    printf("Request: %s\n", request);
-
     int err = use_socket(request, client_input_int == 5);
     free(request);
 

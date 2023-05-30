@@ -385,59 +385,60 @@ char * get_image(cJSON * request, cJSON * database) {
     return image_path_name;    
 }
 
-int answer_request(struct Packet packets[], int num_packets, char * json_response) {
+// int answer_request(struct Packet packets[], int num_packets, char * json_response) {
+int answer_request(char * request, char ** json_response) {
+
     cJSON *database = access_database();
-    char *request;
 
     printf("answer_request() called\n");
-    printf("numPackets: %d\n", num_packets);
+    // printf("numPackets: %d\n", num_packets);
 
-    if (num_packets <= 1){
-        request = packets[0].data;
-    }
-    printf("request: %s\n", request);
-    char request_copy[200] = "{\"co";
-    strcat(request_copy, request);
-    printf("request_copy: %s\n", request_copy);
-    cJSON * json_request = cJSON_Parse(request_copy);
+    // if (num_packets <= 1){
+    //     request = packets[0].data;
+    // }
+    // printf("request: %s\n", request);
+    // char request_copy[200] = "{\"co";
+    // strcat(request_copy, request);
+    // printf("request_copy: %s\n", request_copy);
+    // cJSON * json_request = cJSON_Parse(request_copy);
+    cJSON * json_request = cJSON_Parse(request);
     cJSON * command = cJSON_GetObjectItem(json_request, "command");
     int command_int = atoi(command->valuestring);
 
-    char * json_response;
     int is_image = 0;
 
     switch (command_int) {
         case CREATE_PROFILE:
-            json_response = create_profile(json_request, database);
+            *json_response = create_profile(json_request, database);
             break;
 
         case SEARCH_BATCH:
-            json_response = search(json_request, database);
+            *json_response = search(json_request, database);
             break;
 
         case LIST_ALL:
-            json_response = search(json_request, database);
+            *json_response = search(json_request, database);
             break;
 
         case FIND_PROFILE:
-            json_response = search_profile(json_request, database);
+            *json_response = search_profile(json_request, database);
             break;
 
         case GET_IMAGE:
-            json_response = get_image(json_request, database);
+            *json_response = get_image(json_request, database);
             is_image = 1;
             break;
 
         case DELETE_PROFILE:
-            json_response = delete_profile(json_request, database);
+            *json_response = delete_profile(json_request, database);
             break;
 
         default:
-            json_response = create_error_response(400, "Invalid command");
+            *json_response = create_error_response(400, "Invalid command");
             break;
     };
 
-    printf("json_response: %s\n", json_response);
+    printf("*json_response: %s\n", *json_response);
     printf("arrived in send response\n");
     return is_image;
 }
