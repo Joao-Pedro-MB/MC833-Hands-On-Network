@@ -63,26 +63,48 @@ int use_socket(char * request, int is_image)
 
 
     // receives response from server
+    if (is_image == 0) {
+        struct Packet packets[MAX_PACKET_NUMBER];
+        int n_packets = 0;
+        while(n_packets < MAX_PACKET_NUMBER) {
 
-    struct Packet packets[MAX_PACKET_NUMBER];
-    int n_packets = 0;
-    while(n_packets < MAX_PACKET_NUMBER) {
+            if ((numbytes = recvfrom(sockfd, &packets[n_packets], sizeof(struct Packet) , 0,
+                p->ai_addr, &p->ai_addrlen)) == -1) {
+                perror("recvfrom");
+                exit(1);
+            }
 
-        if ((numbytes = recvfrom(sockfd, &packets[n_packets], sizeof(struct Packet) , 0,
-            p->ai_addr, &p->ai_addrlen)) == -1) {
-            perror("recvfrom");
-            exit(1);
+            n_packets++;
+
+            if (n_packets >= packets[n_packets-1].totalPackets) {
+                printf("talker: all packets received\n");
+                break;
+            }
         }
 
-        n_packets++;
+        printf("aaaaaaaaaaa%d\n",is_image);
 
-        if (n_packets >= packets[n_packets-1].totalPackets) {
-            printf("talker: all packets received\n");
-            break;
+        receive_answer(packets, n_packets);
+
+    } else if (is_image == 1) {
+        printf("imagem\n");
+        char buffer[MAX_DGRAM_SIZE];
+        FILE *file = fopen("./client/image/received.jpg", "wb");
+        if (file == NULL) {
+            perror("Failed to open file");
         }
+
+        size_t num_bytes_received, total_bytes_received = 0;
+        while ((num_bytes_received = recvfrom(sockfd, buffer, MAX_DGRAM_SIZE, 0, p->ai_addr, &p->ai_addrlen)) > 0) {
+            size_t num_bytes_written = fwrite(buffer, sizeof(char), num_bytes_received, file);
+            if (num_bytes_written < num_bytes_received) {
+                perror("Failed to write data to file");
+            }
+            total_bytes_received += num_bytes_received;
+            printf("Received %ld bytes\n", total_bytes_received);
+        }
+        fclose(file);
     }
-
-    receive_answer(packets, n_packets);
 
     freeaddrinfo(servinfo);
 

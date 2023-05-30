@@ -123,7 +123,32 @@ int start_server(void)
             free(packet);
         }
     } else {
-        // passsar a logica do image talker que ta num arquivo do cliente para esse lado aqui
+
+        printf("%s\n", response);
+        FILE *file = fopen(response, "rb");
+        if (file == NULL) {
+            perror("Failed to open file");
+        }
+    
+        fseek(file, 0, SEEK_END);
+        long file_size = ftell(file);
+        fseek(file, 0, SEEK_SET);
+    
+        char buffer[MAX_DGRAM_SIZE];
+        size_t num_bytes_read, total_bytes_sent = 0;
+    
+        while((num_bytes_read = fread(buffer, sizeof(char), MAX_DGRAM_SIZE, file)) > 0) {
+            numbytes = sendto(sockfd, buffer, num_bytes_read, 0,
+                    p->ai_addr, p->ai_addrlen);
+    
+            if (numbytes == -1) {
+                perror("talker: sendto");
+                exit(1);
+            }
+        }
+        
+        printf("talker: sent %d bytes to %s\n", numbytes, SERVER_IP);
+        fclose(file);
     }
 
     close(sockfd);
