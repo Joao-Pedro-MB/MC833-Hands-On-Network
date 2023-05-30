@@ -269,8 +269,6 @@ int main() {
             exit(1);
     };
 
-    printf("Client Input Int: %d\n", client_input_int);
-
     int err = use_socket(request, client_input_int == 5);
     free(request);
 

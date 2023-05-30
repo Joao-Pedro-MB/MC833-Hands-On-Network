@@ -82,13 +82,12 @@ int use_socket(char * request, int is_image)
             }
         }
 
-        printf("aaaaaaaaaaa%d\n",is_image);
-
         receive_answer(packets, n_packets);
 
     } else if (is_image == 1) {
-        printf("imagem\n");
+
         char buffer[MAX_DGRAM_SIZE];
+
         FILE *file = fopen("./client/image/received.jpg", "wb");
         if (file == NULL) {
             perror("Failed to open file");

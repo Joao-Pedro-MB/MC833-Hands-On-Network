@@ -124,7 +124,6 @@ int start_server(void)
         }
     } else {
 
-        printf("%s\n", response);
         FILE *file = fopen(response, "rb");
         if (file == NULL) {
             perror("Failed to open file");
@@ -139,15 +138,17 @@ int start_server(void)
     
         while((num_bytes_read = fread(buffer, sizeof(char), MAX_DGRAM_SIZE, file)) > 0) {
             numbytes = sendto(sockfd, buffer, num_bytes_read, 0,
-                    p->ai_addr, p->ai_addrlen);
+                    (struct sockaddr *)&their_addr, addr_len);
     
             if (numbytes == -1) {
                 perror("talker: sendto");
                 exit(1);
             }
+
+            printf("talker: sent %d bytes to %s\n", numbytes, SERVER_IP);
+        
         }
         
-        printf("talker: sent %d bytes to %s\n", numbytes, SERVER_IP);
         fclose(file);
     }
 
