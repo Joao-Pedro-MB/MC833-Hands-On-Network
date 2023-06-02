@@ -132,6 +132,8 @@ int start_server(void)
         fseek(file, 0, SEEK_END);
         long file_size = ftell(file);
         fseek(file, 0, SEEK_SET);
+
+        printf("image size: %ld\n", file_size);
     
         char buffer[MAX_DGRAM_SIZE];
         size_t num_bytes_read, total_bytes_sent = 0;
