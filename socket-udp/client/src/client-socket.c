@@ -93,14 +93,18 @@ int use_socket(char * request, int is_image)
             perror("Failed to open file");
         }
 
-        size_t num_bytes_received, total_bytes_received = 0;
-        while ((num_bytes_received = recvfrom(sockfd, buffer, MAX_DGRAM_SIZE, 0, p->ai_addr, &p->ai_addrlen)) > 0) {
-            size_t num_bytes_written = fwrite(buffer, sizeof(char), num_bytes_received, file);
-            if (num_bytes_written < num_bytes_received) {
+        size_t bytesRead, totalBytesRead = 0;
+        while ((bytesRead = recvfrom(sockfd, buffer, MAX_DGRAM_SIZE, 0, p->ai_addr, &p->ai_addrlen)) > 0) {
+            size_t num_bytes_written = fwrite(buffer, sizeof(char), bytesRead, file);
+            if (num_bytes_written < bytesRead) {
                 perror("Failed to write data to file");
             }
-            total_bytes_received += num_bytes_received;
-            printf("Received %ld bytes\n", total_bytes_received);
+            totalBytesRead += bytesRead;
+            printf("Received bytesRead: %ld so total bytes are: %ld bytes\n", bytesRead,totalBytesRead);
+
+            if (bytesRead < MAX_DGRAM_SIZE) {
+                break;
+            }
         }
         fclose(file);
     }

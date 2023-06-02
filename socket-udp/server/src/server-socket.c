@@ -124,31 +124,22 @@ int start_server(void)
         }
     } else {
 
-        FILE *file = fopen(response, "rb");
-        if (file == NULL) {
-            perror("Failed to open file");
-        }
-    
-        fseek(file, 0, SEEK_END);
-        long file_size = ftell(file);
-        fseek(file, 0, SEEK_SET);
-
-        printf("image size: %ld\n", file_size);
-    
+        FILE *file;
         char buffer[MAX_DGRAM_SIZE];
-        size_t num_bytes_read, total_bytes_sent = 0;
-    
-        while((num_bytes_read = fread(buffer, sizeof(char), MAX_DGRAM_SIZE, file)) > 0) {
-            numbytes = sendto(sockfd, buffer, num_bytes_read, 0,
-                    (struct sockaddr *)&their_addr, addr_len);
-    
-            if (numbytes == -1) {
-                perror("talker: sendto");
-                exit(1);
-            }
+        size_t bytesRead, numbytes;
 
-            printf("talker: sent %d bytes to %s\n", numbytes, SERVER_IP);
-        
+        // Open the image file in binary mode
+        file = fopen("./server/image/silver-gull.jpg", "rb");
+        if (!file) {
+            printf("Error opening input image file.\n");
+            return 1;
+        }
+
+        while ((bytesRead = fread(buffer, 1, MAX_DGRAM_SIZE, file)) > 0) {
+            numbytes = sendto(sockfd, buffer, bytesRead, 0,
+                (struct sockaddr *)&their_addr, addr_len);
+
+            printf("talker: sent %ld bytes to %s\n", numbytes, SERVER_IP);
         }
         
         fclose(file);
