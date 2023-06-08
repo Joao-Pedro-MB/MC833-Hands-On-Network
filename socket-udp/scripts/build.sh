@@ -1,2 +1,2 @@
-sh ./build-server.sh
-sh ./build-client.sh
+sh ./scripts/build-server.sh
+sh ./scripts/build-client.sh

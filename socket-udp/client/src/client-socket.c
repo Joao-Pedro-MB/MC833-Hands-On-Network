@@ -4,10 +4,10 @@
 
 #include "client-socket.h"
 
-#define MAX_DGRAM_SIZE 4096
+int use_socket(char * request, int is_image) {   
 
-int use_socket(char * request, int is_image)
-{
+    printf("request: %s\n", request);
+
     int sockfd;
     struct addrinfo hints, *servinfo, *p;
     int rv;
