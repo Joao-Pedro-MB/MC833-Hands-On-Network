@@ -188,7 +188,7 @@ char* compare_database(cJSON* field, cJSON* operation, cJSON* value, cJSON* prof
     cJSON* response_array = cJSON_CreateArray();
     int flag = 0;
 
-    if (strcmp(field->valuestring, "age") == 0 ||strcmp(field->valuestring, "graduationYear") == 0){
+    if (strcmp(field->valuestring, "age") == 0 || strcmp(field->valuestring, "graduationYear") == 0){
         cJSON* item = NULL;
         cJSON_ArrayForEach(item, profiles_array) {
             flag = compare_ints(value, operation, cJSON_GetObjectItem(item, field->valuestring));
@@ -196,7 +196,7 @@ char* compare_database(cJSON* field, cJSON* operation, cJSON* value, cJSON* prof
                 cJSON* user_profile = cJSON_CreateObject();
                 cJSON_AddStringToObject(user_profile, "name", cJSON_GetObjectItem(item, "name")->valuestring);
                 cJSON_AddStringToObject(user_profile, "email", cJSON_GetObjectItem(item, "email")->valuestring);
-                cJSON_AddStringToObject(user_profile, "graduationYear", cJSON_GetObjectItem(item, "graduationYear")->valuestring); // fix the typo
+                cJSON_AddStringToObject(user_profile, "scholarity", cJSON_GetObjectItem(item, "scholarity")->valuestring); // fix the typo
                 cJSON_AddItemToArray(response_array, user_profile);
             } else if (flag == -1) {
                 return create_error_response(500, "Invalid operation");
@@ -313,13 +313,13 @@ char * search_profile(cJSON * request, cJSON * database) {
             if (strcmp(cJSON_GetObjectItem(item, "email")->valuestring, email->valuestring) == 0) {
                 found = 1;
                 cJSON_AddStringToObject(user_profile, "name", cJSON_GetObjectItem(item, "name")->valuestring);
-                cJSON_AddNumberToObject(user_profile, "age", cJSON_GetObjectItem(item, "age")->valueint);
+                cJSON_AddStringToObject(user_profile, "age", cJSON_GetObjectItem(item, "age")->valuestring);
                 cJSON_AddStringToObject(user_profile, "email", cJSON_GetObjectItem(item, "email")->valuestring);
                 cJSON_AddStringToObject(user_profile, "city", cJSON_GetObjectItem(item, "city")->valuestring);
                 cJSON_AddStringToObject(user_profile, "state", cJSON_GetObjectItem(item, "state")->valuestring);
                 cJSON_AddStringToObject(user_profile, "scholarity", cJSON_GetObjectItem(item, "scholarity")->valuestring);
                 cJSON_AddStringToObject(user_profile, "skills", cJSON_GetObjectItem(item, "skills")->valuestring);
-                cJSON_AddNumberToObject(user_profile, "graduationYear", cJSON_GetObjectItem(item, "graduationYear")->valueint);
+                cJSON_AddStringToObject(user_profile, "graduationYear", cJSON_GetObjectItem(item, "graduationYear")->valuestring);
             }
 
         }

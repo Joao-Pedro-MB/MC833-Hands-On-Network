@@ -1,3 +1,5 @@
-/build/*
-.vscode/
-*/bin/*
+.vscode/*
+/socket-tcp/server/bin/*
+/socket-tcp/client/bin/*
+/socket-udp/server/bin/*
+/socket-udp/client/bin/*

@@ -165,23 +165,17 @@ char * delete_profile() {
     return format_message(DELETE_PROFILE, NULL, NULL, client_input);
 }
 
-int main(int argc, char *argv[]) {
+int main () {
     int client_input_int;
     char trash[2];
-
-    char ip[100] = IP;
-
-    if (argc >= 2) {
-        ip = argv[1];
-    }
     
 
-    printf("Choose the action you wish to perform by typing the corresponding number:\n\
-        1 - register a new profile using the email as identifier;\n\
-        2 - list profiles based on a criteria (>, <, ==, >=, <=, !=);\n\
-        3 - list all information of all profiles;\n\
-        4 - given a profile's email, return its information;\n\
-        5 - remove a profile;\n");
+    printf( "Escolha a ação que deseja realizar digitando o número correspondente:\n\
+     1 - cadastrar um novo perfil utilizando o email como identificador;\n\
+     2 - listar perfis com base em um critério (>, <, ==, >=, <=, !=);\n\
+     3 - listar todas as informações de todos os perfis;\n\
+     4 - dado o email de um perfil, retornar suas informações;\n\
+     5 - remover um perfil;\n");
     scanf ("%d",&client_input_int);
     trash[0] = getchar();
 
@@ -214,7 +208,7 @@ int main(int argc, char *argv[]) {
             exit(1);
     };
 
-    int err = use_socket(ip, request, response);
+    int err = use_socket(request, response);
     free(request);
 
     if (err != 0) {
