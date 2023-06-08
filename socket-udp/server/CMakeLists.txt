@@ -16,6 +16,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/build)
 add_executable(server
     src/server.c
     src/server-socket.c
+    src/helper-functions.c
 )
 
 # Link cJSON library to the executable
