@@ -142,24 +142,52 @@ char * get_image(cJSON * request, cJSON * database) {
         return create_error_response(400, "Invalid request");
     }
 
-    char image_path[18] = "./server/image/";
+    char image_path[16] = "./server/image/";
+    char image_ext[5] = ".jpg";
+    char  * result = malloc(strlen(image_path) + strlen(image_name->valuestring) + strlen(image_ext) + 1);
 
-    char * image_path_name = malloc(strlen(image_path) + strlen(image_name->valuestring) + 1);
-    strcpy(image_path_name, image_path);
-    strcat(image_path_name, image_name->valuestring);
+    // Copy the individual strings into the final string
+    strcpy(result, image_path);
+    strcat(result, image_name->valuestring);
+    strcat(result, image_ext);
 
-    return image_path_name;    
+    return result;
+}
+
+int build_request(struct Packet packets[], int num_packets, char request[]) {
+    printf("build_request() called\n");
+
+    printf("num_packets: %d\n", num_packets);
+    printf("packets[0].data: %s\n", packets[0].data);
+
+    if (num_packets == 0) {
+        return 1;
+    }
+
+    for (int i = 0; i < num_packets; i++) {
+        printf("packet %d: %s\n", i, packets[i].data);
+        strcat(request, packets[i].data);
+    }
+
+    return 0;
 }
 
 int answer_request(struct Packet packets[], int num_packets, char ** json_response) {
-    cJSON * database = access_database();
-    char *request;
-
     printf("answer_request() called\n");
+    cJSON * database = access_database();
+    char request[200000];
 
-    if (num_packets <= 1){
-        request = packets[0].data;
+    // check request integrity and build it
+    printf("building request\n");
+    printf("num_packets: %d\n", num_packets);
+    int err = build_request(packets, num_packets, request);
+    if (err != 0) {
+        exit(1);
     }
+
+    printf("%s\n", request);
+
+    // convert request to cJSON object
     printf("request: %s\n", request);
     cJSON * json_request = cJSON_Parse(request);
     cJSON * command = cJSON_GetObjectItem(json_request, "command");
@@ -169,27 +197,33 @@ int answer_request(struct Packet packets[], int num_packets, char ** json_respon
 
     switch (command_int) {
         case CREATE_PROFILE:
+            printf("creating profile\n");
             *json_response = create_profile(json_request, database);
             break;
 
         case SEARCH_BATCH:
+            printf("searching batch\n");
             *json_response = search(json_request, database);
             break;
 
         case LIST_ALL:
+            printf("listing all\n");
             *json_response = search(json_request, database);
             break;
 
         case FIND_PROFILE:
+            printf("finding profile\n");
             *json_response = search_profile(json_request, database);
             break;
 
         case GET_IMAGE:
+            printf("getting profile image\n");
             *json_response = get_image(json_request, database);
             is_image = 1;
             break;
 
         case DELETE_PROFILE:
+            printf("deleting profile\n");
             *json_response = delete_profile(json_request, database);
             break;
 
