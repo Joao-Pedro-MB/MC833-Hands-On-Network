@@ -175,7 +175,7 @@ int build_request(struct Packet packets[], int num_packets, char request[]) {
 int answer_request(struct Packet packets[], int num_packets, char ** json_response) {
     printf("answer_request() called\n");
     cJSON * database = access_database();
-    char request[200000];
+    char request[200000] = "";
 
     // check request integrity and build it
     printf("building request\n");

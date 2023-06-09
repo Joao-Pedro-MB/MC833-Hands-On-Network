@@ -159,8 +159,11 @@ int start_server(void)
         int n_packets = 0;
         int * n_packets_ptr = &n_packets;
 
+        printf("\n\n esperando\n\n");
         receive_request(sockfd, packets, n_packets_ptr, &their_addr, s);
+        printf("\n\n recebeu\n\n");
         send_response(sockfd, packets, n_packets_ptr, &their_addr, s);
+        printf("\n\n respondeu\n\n");
     }
 
     close(sockfd);
