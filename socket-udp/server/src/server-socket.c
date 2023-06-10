@@ -35,9 +35,8 @@ void receive_request(int sockfd, struct Packet * packets, int * n_packets_ptr, s
             inet_ntop(their_addr->ss_family,
                 get_in_addr((struct sockaddr *)their_addr),
                 s, sizeof s));
-        printf("listener: packet is %d bytes long\n", numbytes);
+        printf("listener: packet is %d bytes long and has strlen of %ld\n", numbytes, strlen(packets[n_packets-1].data));
         packets[n_packets-1].data[packets[n_packets-1].dataSize] = '\0';
-        printf("listener: packet contains \"%s\"\n", packets[n_packets-1].data);
 
         if (n_packets >= packets[n_packets-1].totalPackets) {
             printf("listener: all packets received\n");
@@ -49,16 +48,12 @@ void receive_request(int sockfd, struct Packet * packets, int * n_packets_ptr, s
     printf("updated n_ptr value: %d and packes n: %d\n", *n_packets_ptr, n_packets);
 }
 
-void send_response(int sockfd, struct Packet * packets, int * n_packets_ptr, struct sockaddr_storage * their_addr, char * s) {
+void send_response(int sockfd, char * response, int is_image, struct sockaddr_storage * their_addr, char * s) {
     printf("send_response() called\n");
-    int numbytes, n_packets = *n_packets_ptr;
-    printf("n_packets called: %d\n", n_packets);
+    printf("is_image: %d\n", is_image);
+    printf("response: %s\n", response);
+    int numbytes = 0;
     socklen_t addr_len = sizeof *their_addr;
-
-    char * response;
-    printf("talker: answering request\n");
-    int is_image = answer_request(packets, n_packets, &response);
-    printf("talker: response is \"%s\"\n", response);
 
     int totalPackets = (strlen(response) / MAX_DGRAM_SIZE) + 1;
 
@@ -79,18 +74,21 @@ void send_response(int sockfd, struct Packet * packets, int * n_packets_ptr, str
                 perror("talker: sendto");
                 exit(1);
             }
+            packet->data[packet->dataSize] = '\0';
 
             printf("talker: sent %d bytes of %d containing %s\n", numbytes, packet->dataSize, packet->data);
             free(packet);
         }
     } else {
 
+        printf("response: %s\n", response);
+
         FILE *file;
         char buffer[MAX_DGRAM_SIZE];
         size_t bytesRead, numbytes;
 
         // Open the image file in binary mode
-        file = fopen("./server/image/silver-gull.jpg", "rb");
+        file = fopen(response, "rb");
         if (!file) {
             printf("Error opening input image file.\n");
             exit(1);
@@ -148,6 +146,16 @@ int start_server(void)
         return 2;
     }
 
+    // Print server IPv6 address
+    struct sockaddr_in6* ipv6 = (struct sockaddr_in6*)p->ai_addr;
+    inet_ntop(AF_INET6, &(ipv6->sin6_addr), s, sizeof s);
+    printf("Server IPv6 address: %s\n", s);
+
+    // Print server port
+    unsigned short port = ntohs(ipv6->sin6_port);
+    printf("Server port: %hu\n", port);
+
+
     freeaddrinfo(servinfo);
 
     printf("listener: waiting to recvfrom...\n");
@@ -158,11 +166,14 @@ int start_server(void)
         struct Packet packets[MAX_PACKET_NUMBER];
         int n_packets = 0;
         int * n_packets_ptr = &n_packets;
+        char * response = NULL;
 
         printf("\n\n esperando\n\n");
         receive_request(sockfd, packets, n_packets_ptr, &their_addr, s);
         printf("\n\n recebeu\n\n");
-        send_response(sockfd, packets, n_packets_ptr, &their_addr, s);
+        int is_image = answer_request(packets, n_packets, &response);
+        printf("response: %s\n", response);
+        send_response(sockfd, response, is_image, &their_addr, s);
         printf("\n\n respondeu\n\n");
     }
 

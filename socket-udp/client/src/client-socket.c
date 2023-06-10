@@ -4,18 +4,43 @@
 
 #include "client-socket.h"
 
+void extractValue(const char* str, char* value) {
+    const char* valueStart = strstr(str, "\"value\":\"");
+    if (valueStart == NULL) {
+        strcpy(value, "");  // Value field not found
+        return;
+    }
+
+    valueStart += 9;  // Move pointer to start of the value
+
+    const char* valueEnd = strchr(valueStart, '\"');
+    if (valueEnd == NULL) {
+        strcpy(value, "");  // Invalid string format
+        return;
+    }
+
+    strncpy(value, valueStart, valueEnd - valueStart);
+    value[valueEnd - valueStart] = '\0';  // Null-terminate the extracted value
+}
+
 void send_request(int sockfd, struct addrinfo * p, char * request) {
+    printf("Sending request: %s\n", request);
+    long int numbytes = 0, totalPackets = (strlen(request) / MAX_DGRAM_SIZE) + 1;
 
-    int numbytes = 0, totalPackets = (strlen(request) / MAX_DGRAM_SIZE) + 1;
-
+    printf("totalPackets: %ld\n", totalPackets);
     for (int n_packets = 0; n_packets < totalPackets; n_packets++){
+        printf("\n\ninside loop: %d\n\n\n", n_packets);
         struct Packet *packet;
         packet = (struct Packet *)malloc(sizeof(struct Packet));
-        packet->totalPackets = 1;
-        packet->packetNumber = 0;
-        packet->dataSize = strlen(request);
-        memcpy(packet->data, request, packet->dataSize);
-
+        packet->totalPackets = totalPackets;
+        packet->packetNumber = n_packets;
+        packet->dataSize = MAX_DGRAM_SIZE;
+        if (n_packets == totalPackets - 1) {
+            packet->dataSize = strlen(request) - (n_packets * MAX_DGRAM_SIZE);
+        }
+        memcpy(packet->data, request + (n_packets * MAX_DGRAM_SIZE), packet->dataSize);
+        printf("packet: %s\n", packet->data);
+        printf("packet->dataSize: %d\n", packet->dataSize);
         if ((numbytes = sendto(sockfd, packet, sizeof(struct Packet), 0,
             p->ai_addr, p->ai_addrlen)) == -1) {
             perror("talker: sendto");
@@ -26,11 +51,16 @@ void send_request(int sockfd, struct addrinfo * p, char * request) {
     }
 }
 
-void receive_image(int sockfd, struct addrinfo * p) {
-    char buffer[MAX_DGRAM_SIZE];
+void receive_image(int sockfd, struct addrinfo * p, char * request) {
+    char buffer[MAX_DGRAM_SIZE], image_path[400], image_name[200];
     size_t bytesRead = 0, totalBytesRead = 0;
 
-    FILE *file = fopen("./client/image/received.jpg", "wb");
+    extractValue(request, image_name);
+    sprintf(image_path, "./client/image/%s.jpg", image_name);
+
+    printf("request: %s\n", request);
+
+    FILE *file = fopen(image_path, "wb");
     if (file == NULL) {
         perror("Failed to open file");
     }
@@ -69,12 +99,14 @@ void receive_response(int sockfd, struct addrinfo * p) {
         }
     }
 
+    printf("n_packets: %d\n", n_packets);
+    printf("vai entrar no receive nswer\n");
     receive_answer(packets, n_packets);
 }
 
 int use_socket(char * request, int is_image) {   
 
-    printf("request: %s\n", request);
+    printf("responding\n");
 
     int sockfd;
     struct addrinfo hints, *servinfo, *p;
@@ -115,7 +147,7 @@ int use_socket(char * request, int is_image) {
         receive_response(sockfd, p);
 
     } else if (is_image == 1) {
-        receive_image(sockfd, p);
+        receive_image(sockfd, p, request);
     }
 
     freeaddrinfo(servinfo);

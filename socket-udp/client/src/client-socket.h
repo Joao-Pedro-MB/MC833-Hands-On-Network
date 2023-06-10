@@ -2,6 +2,7 @@
 #define CLIENT_SOCKET_H
 
 #include <stdio.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <errno.h>
@@ -18,15 +19,16 @@
 #define SERVER_PORT "3490"
 #define CLIENT_PORT "3491" // the port client will be connecting
 #define MAX_DGRAM_SIZE 4096 // max number of bytes we can get at once
-#define MAX_PACKET_NUMBER 100
-#define BUFFER_SIZE 100000
+#define MAX_PACKET_NUMBER 1000
+#define BUFFER_SIZE 500000
 
 #define CREATE_PROFILE 1
 #define SEARCH_BATCH 2
 #define LIST_ALL 3
 #define FIND_PROFILE 4
-#define ADD_PICTURE 5
+#define GET_PICTURE 5
 #define DELETE_PROFILE 6
+#define ADD_PICTURE 7
 
 struct Packet {
     int packetNumber;

@@ -7,6 +7,7 @@
 
 #include <limits.h>
 #include <stdio.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <errno.h>
@@ -31,6 +32,7 @@
 #define FIND_PROFILE 4
 #define GET_IMAGE 5
 #define DELETE_PROFILE 6
+#define ADD_IMAGE 7
 
 #define GREATER 62
 #define LESS 60
@@ -39,8 +41,9 @@
 #define LESS_EQUAL 121
 #define NOT_EQUAL 94
 
-#define MAX_PACKET_NUMBER 100
+#define MAX_PACKET_NUMBER 1000
 #define MAX_DGRAM_SIZE 4096
+#define BUFFER_SIZE 500000
 
 struct Packet{
     int packetNumber;

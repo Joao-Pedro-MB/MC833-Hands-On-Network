@@ -135,62 +135,164 @@ char * delete_profile(cJSON * request, cJSON * database) {
 
 char * get_image(cJSON * request, cJSON * database) {
     printf("get_image() called\n");
-
+    char * result = malloc(400);
     cJSON * image_name = cJSON_GetObjectItem(request, "value");
 
     if (image_name == NULL) {
         return create_error_response(400, "Invalid request");
     }
 
-    char image_path[16] = "./server/image/";
-    char image_ext[5] = ".jpg";
-    char  * result = malloc(strlen(image_path) + strlen(image_name->valuestring) + strlen(image_ext) + 1);
-
-    // Copy the individual strings into the final string
-    strcpy(result, image_path);
-    strcat(result, image_name->valuestring);
-    strcat(result, image_ext);
+    // Create a string variable
+    sprintf(result, "./server/image/%s.jpg", (cJSON_GetObjectItem(request, "value")->valuestring));
 
     return result;
 }
 
-int build_request(struct Packet packets[], int num_packets, char request[]) {
+static const char base64_chars[] =
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    "abcdefghijklmnopqrstuvwxyz"
+    "0123456789+/";
+
+int base64_index(char c) {
+    if (c >= 'A' && c <= 'Z') {
+        return c - 'A';
+    }
+    if (c >= 'a' && c <= 'z') {
+        return c - 'a' + 26;
+    }
+    if (c >= '0' && c <= '9') {
+        return c - '0' + 52;
+    }
+    if (c == '+') {
+        return 62;
+    }
+    if (c == '/') {
+        return 63;
+    }
+    return -1; // Invalid character
+}
+
+unsigned char *base64_decode(const char *data, size_t input_length, size_t *output_length) {
+    if (input_length % 4 != 0) {
+        return NULL;
+    }
+
+    *output_length = input_length / 4 * 3;
+    if (data[input_length - 1] == '=') {
+        (*output_length)--;
+    }
+    if (data[input_length - 2] == '=') {
+        (*output_length)--;
+    }
+
+    unsigned char *decoded_data = malloc(*output_length);
+    if (decoded_data == NULL) {
+        return NULL;
+    }
+
+    size_t i, j;
+    for (i = 0, j = 0; i < input_length;) {
+        uint32_t sextet_a = data[i] == '=' ? 0 & i++ : base64_index(data[i++]);
+        uint32_t sextet_b = data[i] == '=' ? 0 & i++ : base64_index(data[i++]);
+        uint32_t sextet_c = data[i] == '=' ? 0 & i++ : base64_index(data[i++]);
+        uint32_t sextet_d = data[i] == '=' ? 0 & i++ : base64_index(data[i++]);
+
+        uint32_t triple = (sextet_a << 18) + (sextet_b << 12) + (sextet_c << 6) + sextet_d;
+
+        if (j < *output_length) {
+            decoded_data[j++] = (triple >> 16) & 0xFF;
+        }
+        if (j < *output_length) {
+            decoded_data[j++] = (triple >> 8) & 0xFF;
+        }
+        if (j < *output_length) {
+            decoded_data[j++] = triple & 0xFF;
+        }
+    }
+
+    return decoded_data;
+}
+
+char * add_image(cJSON * request, cJSON * database) {
+    printf("enter the add image funtion\n");
+
+    char image_path[400] = "";
+    char * image = cJSON_GetObjectItem(request, "value")->valuestring;
+
+    // Create a string variable
+    sprintf(image_path, "./server/image/%s.jpg", (cJSON_GetObjectItem(request, "field")->valuestring));
+
+    FILE* image_file;
+
+    image_file = fopen(image_path, "wb");
+    if (image_file == NULL) {
+        printf("Failed to open output file.\n");
+        exit(1);
+    }
+
+        // Base64 decoding
+    size_t decoded_length = 0;
+    unsigned char *decoded_data = base64_decode(image, strlen(image), &decoded_length);
+
+    // Write the buffer to the output file
+    int elements_written = fwrite(decoded_data, sizeof(char), decoded_length, image_file);
+    free(decoded_data);
+    free(image);
+
+
+    if (elements_written != decoded_length) {
+        printf("Error writing to the file.\n");
+        fclose(image_file);
+        return format_response(500,"Internl server error");
+    }
+
+    fclose(image_file);
+    return format_response(200,"Image added successfully");
+
+
+}
+
+int build_request(struct Packet packets[], int num_packets, char * request) {
     printf("build_request() called\n");
 
     printf("num_packets: %d\n", num_packets);
-    printf("packets[0].data: %s\n", packets[0].data);
 
     if (num_packets == 0) {
         return 1;
     }
 
+    char tmp_request[500000] = "";
     for (int i = 0; i < num_packets; i++) {
-        printf("packet %d: %s\n", i, packets[i].data);
-        strcat(request, packets[i].data);
+        
+        printf("packet size| %ld\n", strlen(packets[i].data));
+        if (i < num_packets - 1) {
+            packets[i].data[4096] = '\0';
+        }
+        printf("new packet size| %ld\n", strlen(packets[i].data));
+        strcat(tmp_request, packets[i].data);
     }
 
+    sprintf(request, "%s", tmp_request);
+
+    printf("request size: %ld\n", strlen(request));
+    printf("request: %s\n", request);
     return 0;
 }
 
 int answer_request(struct Packet packets[], int num_packets, char ** json_response) {
     printf("answer_request() called\n");
     cJSON * database = access_database();
-    char request[200000] = "";
+    char request[BUFFER_SIZE] = "";
+    int err = 0;
 
     // check request integrity and build it
-    printf("building request\n");
-    printf("num_packets: %d\n", num_packets);
-    int err = build_request(packets, num_packets, request);
-    if (err != 0) {
-        exit(1);
-    }
+    err = build_request(packets, num_packets, request);
 
-    printf("%s\n", request);
-
-    // convert request to cJSON object
-    printf("request: %s\n", request);
     cJSON * json_request = cJSON_Parse(request);
+    printf("json_request: %s\n", cJSON_PrintUnformatted(json_request));
     cJSON * command = cJSON_GetObjectItem(json_request, "command");
+
+
     int command_int = atoi(command->valuestring);
 
     int is_image = 0;
@@ -227,6 +329,10 @@ int answer_request(struct Packet packets[], int num_packets, char ** json_respon
             *json_response = delete_profile(json_request, database);
             break;
 
+        case ADD_IMAGE:
+            printf("adding image\n");
+            *json_response = add_image(json_request, database);
+            break;
         default:
             *json_response = create_error_response(400, "Invalid command");
             break;

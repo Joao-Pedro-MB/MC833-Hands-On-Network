@@ -58,10 +58,10 @@ char * create_new_user() {
 
 // todo: organize this function
 char * show_all_profiles() {
-    char field[10];
+    char field[100];
   
   strncpy(field, "All", 3);
-  field[4] = '\0';
+  field[3] = '\0';
     return format_message(LIST_ALL, field, NULL, NULL);
 }
 
@@ -91,15 +91,200 @@ char * find_profile() {
     return format_message(FIND_PROFILE, NULL, NULL, client_input);
 }
 
-char * add_picture() {
-    char image[BUFFER_SIZE], client_input[100];
+char * get_picture() {
+    char client_input[100];
 
     // receive the image name
-    printf( "Type the image name and extension (ex: image.png):\n");
+    printf( "Type the user's email to get image from:\n");
     scanf("%s",client_input);
 
     // return the payload and commands to be sent to the server
-    return format_message(ADD_PICTURE, NULL, NULL, client_input);
+    return format_message(GET_PICTURE, NULL, NULL, client_input);
+}
+
+
+
+
+
+
+
+static const char base64_chars[] =
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    "abcdefghijklmnopqrstuvwxyz"
+    "0123456789+/";
+
+int base64_index(char c) {
+    if (c >= 'A' && c <= 'Z') {
+        return c - 'A';
+    }
+    if (c >= 'a' && c <= 'z') {
+        return c - 'a' + 26;
+    }
+    if (c >= '0' && c <= '9') {
+        return c - '0' + 52;
+    }
+    if (c == '+') {
+        return 62;
+    }
+    if (c == '/') {
+        return 63;
+    }
+    return -1; // Invalid character
+}
+
+char *base64_encode(const unsigned char *data, size_t input_length, size_t *output_length) {
+    *output_length = 4 * ((input_length + 2) / 3);
+    char *encoded_data = malloc(*output_length);
+    if (encoded_data == NULL) {
+        return NULL;
+    }
+
+    size_t i, j;
+    for (i = 0, j = 0; i < input_length;) {
+        uint32_t octet_a = i < input_length ? (unsigned char)data[i++] : 0;
+        uint32_t octet_b = i < input_length ? (unsigned char)data[i++] : 0;
+        uint32_t octet_c = i < input_length ? (unsigned char)data[i++] : 0;
+
+        uint32_t triple = (octet_a << 16) + (octet_b << 8) + octet_c;
+
+        encoded_data[j++] = base64_chars[(triple >> 18) & 0x3F];
+        encoded_data[j++] = base64_chars[(triple >> 12) & 0x3F];
+        encoded_data[j++] = base64_chars[(triple >> 6) & 0x3F];
+        encoded_data[j++] = base64_chars[triple & 0x3F];
+    }
+
+    // Pad the remaining bytes with '=' characters
+    for (size_t padding = 0; padding < (3 - (input_length % 3)) % 3; padding++) {
+        encoded_data[*output_length - 1 - padding] = '=';
+    }
+
+    return encoded_data;
+}
+
+unsigned char *base64_decode(const char *data, size_t input_length, size_t *output_length) {
+    if (input_length % 4 != 0) {
+        return NULL;
+    }
+
+    *output_length = input_length / 4 * 3;
+    if (data[input_length - 1] == '=') {
+        (*output_length)--;
+    }
+    if (data[input_length - 2] == '=') {
+        (*output_length)--;
+    }
+
+    unsigned char *decoded_data = malloc(*output_length);
+    if (decoded_data == NULL) {
+        return NULL;
+    }
+
+    size_t i, j;
+    for (i = 0, j = 0; i < input_length;) {
+        uint32_t sextet_a = data[i] == '=' ? 0 & i++ : base64_index(data[i++]);
+        uint32_t sextet_b = data[i] == '=' ? 0 & i++ : base64_index(data[i++]);
+        uint32_t sextet_c = data[i] == '=' ? 0 & i++ : base64_index(data[i++]);
+        uint32_t sextet_d = data[i] == '=' ? 0 & i++ : base64_index(data[i++]);
+
+        uint32_t triple = (sextet_a << 18) + (sextet_b << 12) + (sextet_c << 6) + sextet_d;
+
+        if (j < *output_length) {
+            decoded_data[j++] = (triple >> 16) & 0xFF;
+        }
+        if (j < *output_length) {
+            decoded_data[j++] = (triple >> 8) & 0xFF;
+        }
+        if (j < *output_length) {
+            decoded_data[j++] = triple & 0xFF;
+        }
+    }
+
+    return decoded_data;
+}
+
+char * add_picture() {
+    char image[BUFFER_SIZE], client_input[100], image_path[400];
+
+    // receive the image name
+    printf( "Add a .jpg image in the ./socket-udp/client/image directory\n and name it with the email of a user then fill the next line\n\n");
+    printf( "Type the user's email for this profile picture:\n");
+    scanf("%s",client_input);
+
+    FILE *image_file;
+    size_t numbytes, file_size;
+
+    // Create a string variable
+    sprintf(image_path, "./client/image/%s.jpg", client_input);
+
+    image_file = fopen(image_path, "rb");
+    if (image_file == NULL) {
+        printf("Failed to open the image file: %s\n", image_path);
+        exit(1);
+    }
+
+
+    // Determine the size of the image file
+    fseek(image_file, 0, SEEK_END);
+    file_size = ftell(image_file);
+    fseek(image_file, 0, SEEK_SET);
+
+    // Check if the image file size is greater than the buffer size
+    if (file_size > BUFFER_SIZE) {
+        printf("Image file size exceeds buffer size\n");
+        fclose(image_file);
+        exit(1);
+    }
+
+    // Read the image file into the buffer
+    numbytes = fread(image, 1, file_size, image_file);
+
+    if (numbytes != file_size) {
+        printf("Failed to read the image file\n");
+        exit(1);
+    }
+
+    fclose(image_file);
+
+
+
+    // Base64 encoding
+    size_t encoded_length = 0;
+    char *encoded_data = base64_encode(image, file_size, &encoded_length);
+
+    printf("Base64 Encoded Data: %s\n", encoded_data);
+
+    // Base64 decoding
+    size_t decoded_length = 0;
+    unsigned char *decoded_data = base64_decode(encoded_data, encoded_length, &decoded_length);
+
+    printf("Base64 Decoded Data: %s\n", decoded_data);
+
+    FILE* output_file;
+
+    output_file = fopen("./client/image/output.jpg", "wb");
+    if (output_file == NULL) {
+        printf("Failed to open output file.\n");
+        exit(1);
+    }
+
+    // Write the buffer to the output file
+    fwrite(decoded_data, sizeof(char), decoded_length, output_file);
+    fclose(output_file);
+    free(decoded_data);
+
+
+
+
+
+
+
+
+
+
+
+
+    // return the payload and commands to be sent to the server
+    return format_message(ADD_PICTURE, client_input, NULL, encoded_data);
 }
 
 char * delete_profile() {
@@ -123,12 +308,13 @@ int main() {
      2 - listar perfis com base em um critério (>, <, ==, >=, <=, !=);\n\
      3 - listar todas as informações de todos os perfis;\n\
      4 - dado o email de um perfil, retornar suas informações;\n\
-     5 - enviar uma foto ao servidor;\n\
-     6 - remover um perfil;\n");
+     5 - receber foto de usuário;\n\
+     6 - remover um perfil;\n\
+     7 - cadastrar foto de usuário;\n");
     scanf("%d",&client_input_int);
     trash[0] = getchar();
 
-   char * request;
+    char * request;
 
     switch (client_input_int) {
         case 1:
@@ -148,11 +334,15 @@ int main() {
             break;
 
         case 5:
-            request = add_picture();
+            request = get_picture();
             break;
 
         case 6:
             request = delete_profile();
+            break;
+
+        case 7:
+            request = add_picture();
             break;
 
         default:

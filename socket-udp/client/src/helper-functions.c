@@ -78,12 +78,13 @@ void parse_response(char * response) {
         printf("Message: %s\n", message->valuestring);
 
     } else {
-        printf("Error: %s, Message: %s\n", status->valuestring, message->valuestring);
+        printf("Error: %d, Message: %s\n", status->valueint, message->valuestring);
         
     } 
 }
 
 void receive_answer(struct Packet packets[], int num_packets) {
+    printf("num_packets: %d\n", num_packets);
     if (num_packets == 0) {
         printf("No packets received\n");
         return;
