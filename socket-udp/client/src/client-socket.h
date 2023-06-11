@@ -50,6 +50,12 @@ void parse_response(char * response);
 
 void receive_answer(struct Packet packets[], int num_packets);
 
+// base64 functions
+int base64_index(char c);
+
+char *base64_encode(const unsigned char *data, size_t input_length, size_t *output_length);
+
+unsigned char *base64_decode(const char *data, size_t input_length, size_t *output_length);
 
 // soket functions
 void *get_in_addr(struct sockaddr *sa);

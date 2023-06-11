@@ -72,6 +72,13 @@ char * format_response(int status, char* message);
 
 char * compare_database(cJSON* field, cJSON* operation, cJSON* value, cJSON* profiles_array);
 
+// base64 functions
+int base64_index(char c);
+
+char *base64_encode(const unsigned char *data, size_t input_length, size_t *output_length);
+
+unsigned char *base64_decode(const char *data, size_t input_length, size_t *output_length);
+
 // server functions
 void sigchld_handler(int s);
 

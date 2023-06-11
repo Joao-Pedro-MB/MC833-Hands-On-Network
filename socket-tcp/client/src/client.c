@@ -77,6 +77,8 @@ void parse_response(char * response) {
 
 char * create_new_user() {
     char email[100], name[100], age[100], city[100], state[100], scholarity[100], graduationYear[10], skills[1000];
+
+    // receive all client inputs
     printf( "Type new user's email:\n");
     fgets(email, sizeof(email), stdin);
     email[strcspn(email, "\n")] = '\0';
@@ -109,6 +111,8 @@ char * create_new_user() {
     fgets(skills, sizeof(skills), stdin);
     skills[strcspn(skills, "\n")] = '\0';
 
+
+    // create json object
     cJSON *root = cJSON_CreateObject();
     cJSON_AddStringToObject(root, "name", name);
     cJSON_AddStringToObject(root, "age", age);
@@ -118,50 +122,56 @@ char * create_new_user() {
     cJSON_AddStringToObject(root, "scholarity", scholarity);
     cJSON_AddStringToObject(root, "graduationYear", graduationYear);
     cJSON_AddStringToObject(root, "skills", skills);
+
+    // formt the json object to string
     char * message = cJSON_PrintUnformatted(root);
     cJSON_Delete(root);
 
+    // return the payload and commands to be sent to the server
     return format_message(CREATE_PROFILE, NULL, NULL, message);
 }
 
 char * show_all_profiles() {
-    char* field;
-    field = (char *) malloc(10 * sizeof(char));
+    char field[100];
   
   strncpy(field, "All", 3);
-  field[4] = '\0';
+  field[3] = '\0';
     return format_message(LIST_ALL, field, NULL, NULL);
 }
 
 char * search_group_of_profiles() {
-    char* field = (char*) malloc(100*sizeof(char));
-    char* operation = (char*) malloc(100*sizeof(char));
-    char* value = (char*) malloc(100*sizeof(char));
-    char* input = (char*) malloc(1000*sizeof(char));
+    char field[100], operation[100], value[100], input[1000];
+
+    // receive the query from the client
     printf( "Type the field, comparison method(>, <, ==, <=, >=, !=) and value devided by space (ex: Age > 29):\n");
     
     fgets(input, 1000, stdin);
     input[strcspn(input, "\n")] = '\0';
     parse_string(input, field, operation, value);
 
+    // return the payload and commands to be sent to the server
     return format_message(SEARCH_BATCH, field, operation, value);
 }
 
 char * find_profile() {
-    char* client_input;
-    client_input = (char*) malloc(100*sizeof(char));
+    char client_input[100];
+
+    // receive key for profile search
     printf( "Type the user's email:\n");
     scanf ("%s",client_input);
 
+    // return the payload and commands to be sent to the server
     return format_message(FIND_PROFILE, NULL, NULL, client_input);
 }
 
 char * delete_profile() {
-    char* client_input;
-    client_input = (char*) malloc(100*sizeof(char));
+    char client_input[100];
+    
+    // receive key for profile deletion
     printf( "Type the user's email:\n");
-    scanf ("%s",client_input);
+    scanf("%s",client_input);
 
+    // return the payload and commands to be sent to the server
     return format_message(DELETE_PROFILE, NULL, NULL, client_input);
 }
 
