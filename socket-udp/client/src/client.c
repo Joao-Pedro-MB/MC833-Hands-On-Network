@@ -196,7 +196,7 @@ char * add_picture() {
     return format_message(ADD_PICTURE, client_input, NULL, encoded_data);
 }
 
-int main() {
+int main(int argc, char *argv[]) {
     int client_input_int;
     char trash[2];
     
@@ -248,7 +248,7 @@ int main() {
             exit(1);
     };
 
-    int err = use_socket(request, client_input_int == 5);
+    int err = use_socket(request, client_input_int == 5, argc, argv);
     free(request);
 
     if (err != 0) {

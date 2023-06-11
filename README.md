@@ -33,6 +33,7 @@ sh scripts/run-client.sh IP of the server
 ```
 if no IP is provided, the client will try to connect to localhost.
 **If you are running server and client in the same computer, you can and are encouraged to run the client without any arguments.**
+**The PORT always will be 3490, if you want another PORT change the PORT definition in all the .h files.**
 
 5 - All set:
 Now you are good to go! You can use the client to create, delete, search, and update users in the database.

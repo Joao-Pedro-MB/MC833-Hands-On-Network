@@ -16,8 +16,7 @@
 
 #define SERVER_IP "::1" // the fixed IP that the server is running on
 #define CLIENT_IP "::1" // the fixed IP that the client is running
-#define SERVER_PORT "3490"
-#define CLIENT_PORT "3491" // the port client will be connecting
+#define PORT "3490"
 #define MAX_DGRAM_SIZE 4096 // max number of bytes we can get at once
 #define MAX_PACKET_NUMBER 1000
 #define BUFFER_SIZE 500000
@@ -58,9 +57,7 @@ char *base64_encode(const unsigned char *data, size_t input_length, size_t *outp
 unsigned char *base64_decode(const char *data, size_t input_length, size_t *output_length);
 
 // soket functions
-void *get_in_addr(struct sockaddr *sa);
-
-int use_socket(char * request, int is_image);
+int use_socket(char * request, int is_image, int argc, char *argv[]);
 
 int start_listener();
 

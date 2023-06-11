@@ -104,20 +104,26 @@ void receive_response(int sockfd, struct addrinfo * p) {
     receive_answer(packets, n_packets);
 }
 
-int use_socket(char * request, int is_image) {   
+int use_socket(char * request, int is_image, int argc, char *argv[]) {   
 
     printf("responding\n");
 
     int sockfd;
     struct addrinfo hints, *servinfo, *p;
     int rv;
+    char *ip = SERVER_IP;
+
+    if (argc == 2) {
+        ip = argv[1];
+        printf("ip: %s\n", ip);
+    }
 
 
     memset(&hints, 0, sizeof hints);
     hints.ai_family = AF_INET6; // set to AF_INET to use IPv4
     hints.ai_socktype = SOCK_DGRAM;
 
-    if ((rv = getaddrinfo(SERVER_IP, SERVER_PORT, &hints, &servinfo)) != 0) {
+    if ((rv = getaddrinfo(ip, PORT, &hints, &servinfo)) != 0) {
         fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rv));
         return 1;
     }

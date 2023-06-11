@@ -4,14 +4,14 @@
 
 #include "client-socket.h"
 
-int initialize_socket(int * sockfd, struct addrinfo * hints, struct addrinfo * servinfo, struct addrinfo * p, int * rv, char * s) {
+int initialize_socket(int * sockfd, struct addrinfo * hints, struct addrinfo * servinfo, struct addrinfo * p, int * rv, char * s, char * ip) {
     memset(hints, 0, sizeof *hints);
     hints->ai_family = AF_UNSPEC;
     hints->ai_socktype = SOCK_STREAM;
 
 
     printf("client geting addrinfo\n");
-    if ((*rv = getaddrinfo(IP, PORT, hints, &servinfo)) != 0) {
+    if ((*rv = getaddrinfo(ip, PORT, hints, &servinfo)) != 0) {
         fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(*rv));
         return 1;
     }
@@ -54,18 +54,26 @@ void *get_in_addr(struct sockaddr *sa) {
 	return &(((struct sockaddr_in6*)sa)->sin6_addr);
 }
 
-int use_socket(char * request, char response[MAXDATASIZE]) {
+int use_socket(char * request, char response[MAXDATASIZE], int argc, char *argv[]) {
 	
     int sockfd, bytes_received;  
     char buf[MAXDATASIZE];
     struct addrinfo hints = {0}, *servinfo = NULL, *p = NULL;
     int rv;
     char s[INET6_ADDRSTRLEN];
+    char *ip = SERVER_IP;
+
+    if (argc == 2) {
+        ip = argv[1];
+        printf("ip: %s\n", ip);
+    }
+
     printf("client initializing\n");
-    int err = initialize_socket(&sockfd, &hints, servinfo, p, &rv, s);
+    int err = initialize_socket(&sockfd, &hints, servinfo, p, &rv, s, ip);
     if (err > 0) {
         return err;
     }
+
     printf("client sending\n");
     printf("request: %s\n\n", request);
     if (send(sockfd, request, strlen(request), 0) == -1)
@@ -73,6 +81,7 @@ int use_socket(char * request, char response[MAXDATASIZE]) {
 
     printf("client receiving\n");
     bytes_received = recv(sockfd, response, MAXDATASIZE - 1, 0);
+
     if (bytes_received == -1) {
         perror("recv");
         exit(1);

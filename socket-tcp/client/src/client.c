@@ -175,7 +175,7 @@ char * delete_profile() {
     return format_message(DELETE_PROFILE, NULL, NULL, client_input);
 }
 
-int main () {
+int main (int argc, char *argv[]) {
     int client_input_int;
     char trash[2];
     
@@ -218,7 +218,7 @@ int main () {
             exit(1);
     };
 
-    int err = use_socket(request, response);
+    int err = use_socket(request, response, argc, argv);
     free(request);
 
     if (err != 0) {

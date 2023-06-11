@@ -21,7 +21,7 @@
 #include <signal.h>
 #include <cJSON.h>
 
-#define SERVER_PORT "3490"  // the port users will be connecting to
+#define PORT "3490"  // the port users will be connecting to
 #define CLIENT_PORT "3491" // the port for the client to connect to
 #define CLIENT_IP "::1"
 #define SERVER_IP "::1" // the hardcoded IP for debugging purposes, will be deleted soon
