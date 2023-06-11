@@ -180,12 +180,12 @@ int main (int argc, char *argv[]) {
     char trash[2];
     
 
-    printf( "Escolha a ação que deseja realizar digitando o número correspondente:\n\
-     1 - cadastrar um novo perfil utilizando o email como identificador;\n\
-     2 - listar perfis com base em um critério (>, <, ==, >=, <=, !=);\n\
-     3 - listar todas as informações de todos os perfis;\n\
-     4 - dado o email de um perfil, retornar suas informações;\n\
-     5 - remover um perfil;\n");
+    printf( "Choose the action you wish to perform by entering the corresponding number:\n\
+1 - register a new profile using the email as an identifier;\n\
+2 - list profiles based on a criteria (>, <, ==, >=, <=, !=);\n\
+3 - list all information of all profiles;\n\
+4 - given a profile's email, return its information;\n\
+5 - remove a profile;\n");
     scanf ("%d",&client_input_int);
     trash[0] = getchar();
 
@@ -193,23 +193,23 @@ int main (int argc, char *argv[]) {
    char response[MAXDATASIZE];
 
     switch (client_input_int) {
-        case 1:
+        case CREATE_PROFILE:
             request = create_new_user();
             break;
 
-        case 2:
+        case SEARCH_BATCH:
             request = search_group_of_profiles();
             break;
 
-        case 3:
+        case LIST_ALL:
             request = show_all_profiles();
             break;
 
-        case 4:
+        case FIND_PROFILE:
             request = find_profile();
             break;
 
-        case 5:
+        case DELETE_PROFILE:
             request = delete_profile();
             break;
 
